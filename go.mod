@@ -1,3 +1,3 @@
 module github.com/aaronvb/requesthole
 
-go 1.14
+go 1.15
