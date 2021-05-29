@@ -1,6 +1,7 @@
 # Request Hole CLI
 [![go.dev Reference](https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white&style=flat)](https://pkg.go.dev/github.com/aaronvb/request_hole) 
 [![Test](https://github.com/aaronvb/request_hole/workflows/Test/badge.svg)](https://github.com/aaronvb/request_hole/actions/workflows/tests.yml)
+[![Build](https://github.com/aaronvb/request_hole/workflows/Build/badge.svg)](https://github.com/aaronvb/request_hole/actions/workflows/build.yml)
 
 `rq` is a CLI tool for creating an ephemeral endpoint for testing and inspecting requests from your application or webhook.
 
