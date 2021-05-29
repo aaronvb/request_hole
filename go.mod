@@ -5,7 +5,6 @@ go 1.15
 require (
 	github.com/aaronvb/logparams v1.0.0
 	github.com/aaronvb/logrequest v1.0.0
-	github.com/gookit/color v1.4.2 // indirect
 	github.com/gorilla/mux v1.8.0
 	github.com/pterm/pterm v0.12.18
 	github.com/spf13/cobra v1.1.3
