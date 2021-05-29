@@ -6,12 +6,14 @@ import (
 
 	"github.com/aaronvb/logrequest"
 	"github.com/aaronvb/request_hole/pkg/version"
+	"github.com/pterm/pterm"
 )
 
 func TestStartText(t *testing.T) {
+	pterm.DisableColor()
 	printer := Printer{Addr: "localhost", Port: 8080}
 	result := printer.startText()
-	expected := fmt.Sprintf("Request Hole %s\nListening at http://%s:%d", version.BuildVersion, printer.Addr, printer.Port)
+	expected := fmt.Sprintf("Request Hole %s\nListening on http://%s:%d", version.BuildVersion, printer.Addr, printer.Port)
 
 	if result != expected {
 		t.Errorf("Expected %s, got %s", expected, result)
@@ -19,6 +21,7 @@ func TestStartText(t *testing.T) {
 }
 
 func TestIncomingRequestText(t *testing.T) {
+	pterm.DisableColor()
 	printer := Printer{}
 	fields := logrequest.RequestFields{
 		Method: "GET",
