@@ -15,6 +15,8 @@ git clone git@github.com:aaronvb/request_hole.git
 cd request_hole
 go build -o $GOBIN/rq
 ```
+### Release versions
+Download the release version for your system: https://github.com/aaronvb/request_hole/releases
 
 ## Usage
 ```
