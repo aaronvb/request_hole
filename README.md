@@ -10,7 +10,7 @@
 ## Installation
 ### Homebrew
 ```
-brew install aaronvb/request_hole/request_hole
+brew install aaronvb/request_hole/rh
 ```
 
 ### Clone repo and build

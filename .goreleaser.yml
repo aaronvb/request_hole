@@ -33,6 +33,7 @@ changelog:
       - '^test:'
 brews:
   -
+    name: rh
     goarm: 6
     tap:
       owner: aaronvb
