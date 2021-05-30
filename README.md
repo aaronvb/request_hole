@@ -8,6 +8,11 @@
 <img width="741" alt="rh" src="https://user-images.githubusercontent.com/100900/120058797-f9d90780-bfe8-11eb-9b1d-f65a27773600.png">
 
 ## Installation
+### Homebrew
+```
+brew install aaronvb/request_hole/request_hole
+```
+
 ### Clone repo and build
 First make sure you have Go installed: https://golang.org/doc/install
 ```
@@ -19,6 +24,10 @@ go build -o $GOBIN/rh
 Download the release version for your system: https://github.com/aaronvb/request_hole/releases
 
 ## Usage
+```
+$ rh
+```
+
 ```
 rh: Request Hole
 This CLI tool will let you create a temporary API endpoint for testing purposes.
