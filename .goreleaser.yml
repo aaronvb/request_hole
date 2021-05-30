@@ -63,7 +63,7 @@ brews:
     # Default for github is "https://github.com/<repo_owner>/<repo_name>/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
     # Default for gitlab is "https://gitlab.com/<repo_owner>/<repo_name>/-/releases/{{ .Tag }}/downloads/{{ .ArtifactName }}"
     # Default for gitea is "https://gitea.com/<repo_owner>/<repo_name>/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
-    url_template: "https://github.com/<repo_owner>/<repo_name>/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+    url_template: "https://github.com/aaronvb/request_hole/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
 
     # Allows you to set a custom download strategy. Note that you'll need
     # to implement the strategy and add it to your tap repository.
@@ -117,10 +117,9 @@ brews:
     #   ...
 
     # Packages your package depends on.
-    # dependencies:
-    #   - name: git
-    #   - name: zsh
-    #     type: optional
+    dependencies:
+      - name: go
+        type: optional
 
     # Packages that conflict with your package.
     # conflicts:
@@ -135,9 +134,9 @@ brews:
 
     # So you can `brew test` your formula.
     # Default is empty.
-    # test: |
-    #   system "#{bin}/program --version"
-    #   ...
+    test: |
+      system "#{bin}/rq version"
+      ...
 
     # Custom install script for brew.
     # Default is 'bin.install "program"'.
