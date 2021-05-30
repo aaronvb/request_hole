@@ -11,9 +11,9 @@ var (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "rq",
+	Use:   "rh",
 	Short: "A CLI for an ephemeral API endpoint",
-	Long: `rq: Request Hole
+	Long: `rh: Request Hole
 This CLI tool will let you create a temporary API endpoint for testing purposes.`,
 }
 

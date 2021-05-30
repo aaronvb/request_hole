@@ -9,7 +9,7 @@ import (
 var getCmd = &cobra.Command{
 	Use:   "http",
 	Short: "Creates an http endpoint",
-	Long: `rq: http
+	Long: `rh: http
 Create an endpoint that accepts http connections.
 `,
 	Run: http,
