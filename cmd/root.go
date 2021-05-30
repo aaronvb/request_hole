@@ -7,6 +7,7 @@ var (
 	Address      string
 	Port         int
 	ResponseCode int
+	BuildInfo    map[string]string
 )
 
 var rootCmd = &cobra.Command{
@@ -16,7 +17,8 @@ var rootCmd = &cobra.Command{
 This CLI tool will let you create a temporary API endpoint for testing purposes.`,
 }
 
-func Execute() error {
+func Execute(buildInfo map[string]string) error {
+	BuildInfo = buildInfo
 	return rootCmd.Execute()
 }
 

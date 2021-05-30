@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/aaronvb/logrequest"
-	"github.com/aaronvb/request_hole/pkg/version"
 	"github.com/pterm/pterm"
 )
 
@@ -19,6 +18,9 @@ type Printer struct {
 	// Fields for startText
 	Port int
 	Addr string
+
+	// Contains build info
+	BuildInfo map[string]string
 }
 
 // Start renders the initial header and the spinner. The Spinner should be consistent during
@@ -41,7 +43,7 @@ func (p *Printer) startText() string {
 		Sprintf("Request Hole")
 	version := pterm.DefaultBasicText.
 		WithStyle(pterm.NewStyle(pterm.Fuzzy)).
-		Sprintf(version.BuildVersion)
+		Sprintf(p.BuildInfo["version"])
 
 	text := fmt.Sprintf("%s %s\nListening on http://%s:%d", primary, version, p.Addr, p.Port)
 	return text

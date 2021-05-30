@@ -2,8 +2,8 @@ package cmd
 
 import (
 	"fmt"
+	"time"
 
-	"github.com/aaronvb/request_hole/pkg/version"
 	"github.com/spf13/cobra"
 )
 
@@ -15,6 +15,15 @@ var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Print version number of Request Hole",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("Request Hole %s\n%s\n", version.BuildVersion, version.BuildRepo)
+		var date string
+
+		buildDate, err := time.Parse(time.RFC3339, BuildInfo["date"])
+		if err != nil {
+			date = BuildInfo["date"]
+		} else {
+			date = buildDate.Format("2006-01-02 15:04:05")
+		}
+
+		fmt.Printf("Request Hole %s\n%s\n\nBuild date: %s\nCommit: %s\nBuild by: %s", BuildInfo["version"], BuildInfo["repo"], date, BuildInfo["commit"], BuildInfo["builtBy"])
 	},
 }
