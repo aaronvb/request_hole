@@ -34,3 +34,27 @@ func TestIncomingRequestText(t *testing.T) {
 		t.Errorf("Expected %s, got %s", expected, result)
 	}
 }
+
+func TestIncomingRequestHeadersTables(t *testing.T) {
+	pterm.DisableColor()
+	printer := Printer{}
+	headers := map[string][]string{
+		"hello": {"world", "foobar"},
+		"foo":   {"bar"},
+	}
+	result := printer.incomingRequestHeadersTable(headers)
+
+	headersForTable := [][]string{}
+	headersForTable = append(headersForTable, []string{"Header", "Value"})
+	headersForTable = append(headersForTable, []string{"foo", "bar"})
+	headersForTable = append(headersForTable, []string{"hello", "world,foobar"})
+
+	expected, err := pterm.DefaultTable.WithHasHeader().WithData(headersForTable).Srender()
+	if err != nil {
+		t.Error(err)
+	}
+
+	if result != expected {
+		t.Errorf("Expected %s, got %s", expected, result)
+	}
+}

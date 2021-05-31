@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sort"
+	"strings"
 
 	"github.com/aaronvb/logrequest"
 	"github.com/pterm/pterm"
@@ -21,6 +23,9 @@ type Printer struct {
 
 	// Contains build info
 	BuildInfo map[string]string
+
+	// Determines if header details should be shown with the request
+	Details bool
 }
 
 // Start renders the initial header and the spinner. The Spinner should be consistent during
@@ -63,7 +68,7 @@ func (p *Printer) Fatal(err error) {
 }
 
 // IncomingRequest handles the output for incoming requests to the server.
-func (p *Printer) IncomingRequest(fields logrequest.RequestFields, params string) {
+func (p *Printer) IncomingRequest(fields logrequest.RequestFields, params string, headers map[string][]string) {
 	p.Spinner.Stop()
 	prefix := pterm.Prefix{
 		Text:  fields.Method,
@@ -72,6 +77,12 @@ func (p *Printer) IncomingRequest(fields logrequest.RequestFields, params string
 
 	text := p.incomingRequestText(fields, params)
 	pterm.Info.WithPrefix(prefix).Println(text)
+
+	if p.Details {
+		table := p.incomingRequestHeadersTable(headers)
+		pterm.Printf("%s\n\n", table)
+	}
+
 	p.startSpinner()
 }
 
@@ -83,6 +94,35 @@ func (p *Printer) incomingRequestText(fields logrequest.RequestFields, params st
 
 	text := fmt.Sprintf("%s %s", urlWithStyle, paramsWithStyle)
 	return text
+}
+
+// incomingRequestHeadersTable constructs the headers table string.
+// This takes the headers map from the request and sorts it alphabetically by key.
+func (p *Printer) incomingRequestHeadersTable(headers map[string][]string) string {
+	keys := make([]string, 0, len(headers))
+	for key := range headers {
+		keys = append(keys, key)
+	}
+
+	sort.Strings(keys)
+
+	var headersFormatted [][]string
+
+	headerRow := []string{"Header", "Value"}
+	headersFormatted = append(headersFormatted, headerRow)
+
+	for _, key := range keys {
+		value := strings.Join(headers[key], ",")
+		headersRow := []string{key, value}
+		headersFormatted = append(headersFormatted, headersRow)
+	}
+
+	headersTable, err := pterm.DefaultTable.WithHasHeader().WithData(headersFormatted).Srender()
+	if err != nil {
+		pterm.Error.WithShowLineNumber(false).Println(err)
+	}
+
+	return headersTable
 }
 
 // Create the spinner which will be displayed at the bottom.
