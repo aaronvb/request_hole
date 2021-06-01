@@ -18,5 +18,5 @@ type Renderer interface {
 	// Fatal is used when we need to display a message and should always exit the CLI.
 	Fatal(error)
 
-	IncomingRequest(logrequest.RequestFields, string)
+	IncomingRequest(logrequest.RequestFields, string, map[string][]string)
 }

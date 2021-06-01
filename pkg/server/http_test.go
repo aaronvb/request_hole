@@ -12,16 +12,18 @@ import (
 )
 
 type MockPrinter struct {
-	fields logrequest.RequestFields
-	params string
+	fields  logrequest.RequestFields
+	params  string
+	headers map[string][]string
 }
 
 func (mp *MockPrinter) Fatal(error)              {}
 func (mp *MockPrinter) Start()                   {}
 func (mp *MockPrinter) ErrorLogger() *log.Logger { return log.New(os.Stderr, "", 0) }
-func (mp *MockPrinter) IncomingRequest(fields logrequest.RequestFields, params string) {
+func (mp *MockPrinter) IncomingRequest(fields logrequest.RequestFields, params string, headers map[string][]string) {
 	mp.fields = fields
 	mp.params = params
+	mp.headers = headers
 }
 
 func TestResponseCodeFlag(t *testing.T) {
@@ -94,6 +96,42 @@ func TestLogRequest(t *testing.T) {
 
 		if renderer.params != test.expectedParams {
 			t.Errorf("Expected %s, got %s", test.expectedParams, renderer.params)
+		}
+	}
+}
+
+func TestLogRequestHeaders(t *testing.T) {
+	headers := map[string]string{
+		"Content-Type": "application/json",
+		"Foo":          "bar",
+		"Bearer":       "hello!",
+	}
+
+	renderer := &MockPrinter{}
+	httpServer := Http{ResponseCode: 200, Output: renderer}
+	srv := httptest.NewServer(httpServer.routes())
+	defer srv.Close()
+
+	req, err := http.NewRequest(http.MethodGet, srv.URL, nil)
+	if err != nil {
+		t.Error(err)
+	}
+
+	for key, value := range headers {
+		req.Header.Set(key, value)
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Error(err)
+	}
+
+	defer resp.Body.Close()
+
+	for key, value := range headers {
+		result := renderer.headers[key][0]
+		if value != result {
+			t.Errorf("Expected %s, got %s", value, result)
 		}
 	}
 }

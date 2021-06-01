@@ -8,6 +8,7 @@ var (
 	Port         int
 	ResponseCode int
 	BuildInfo    map[string]string
+	Details      bool
 )
 
 var rootCmd = &cobra.Command{
@@ -26,4 +27,5 @@ func init() {
 	rootCmd.PersistentFlags().IntVarP(&Port, "port", "p", 8080, "sets the port for the endpoint")
 	rootCmd.PersistentFlags().StringVarP(&Address, "address", "a", "localhost", "sets the address for the endpoint")
 	rootCmd.PersistentFlags().IntVarP(&ResponseCode, "response_code", "r", 200, "sets the response code")
+	rootCmd.PersistentFlags().BoolVar(&Details, "details", false, "shows header details in the request")
 }

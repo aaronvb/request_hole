@@ -63,6 +63,6 @@ func (s *Http) logRequest(next http.Handler) http.Handler {
 		lr := logrequest.LogRequest{Request: r, Writer: w, Handler: next}
 		fields := lr.ToFields()
 		params := logparams.LogParams{Request: r, HidePrefix: true}
-		s.Output.IncomingRequest(fields, params.ToString())
+		s.Output.IncomingRequest(fields, params.ToString(), r.Header)
 	})
 }
