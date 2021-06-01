@@ -64,3 +64,10 @@ This option shows all the header details in the incoming request.
 $ rh http --details
 ```
 <img width="785" alt="Request Hole CLI details" src="https://user-images.githubusercontent.com/100900/120266674-1d48c000-c23e-11eb-8107-50db997ac3cc.png">
+
+### Exposing Request Hole to the internet
+Sometimes we need to expose `rh` to the internet to test applications or webhooks from outside of our local dev env. The best way to do this is to use a tunneling service such as [ngrok](https://ngrok.com).
+```
+$ ngrok http 3001
+$ rh http -p 3001
+```
