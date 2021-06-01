@@ -51,6 +51,11 @@ func (p *Printer) startText() string {
 		Sprintf(p.BuildInfo["version"])
 
 	text := fmt.Sprintf("%s %s\nListening on http://%s:%d", primary, version, p.Addr, p.Port)
+
+	if p.Details {
+		text = fmt.Sprintf("%s\nDetails: %t", text, p.Details)
+	}
+
 	return text
 }
 
