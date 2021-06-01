@@ -5,7 +5,8 @@
 
 `rh` is a CLI tool for creating an ephemeral endpoint for testing and inspecting requests from your application or webhook.
 
-<img width="741" alt="rh" src="https://user-images.githubusercontent.com/100900/120058797-f9d90780-bfe8-11eb-9b1d-f65a27773600.png">
+<img width="788" alt="Request Hole CLI" src="https://user-images.githubusercontent.com/100900/120265767-63048900-c23c-11eb-9a20-079ab9822767.png">
+
 
 ## Installation
 ### Homebrew
@@ -42,6 +43,7 @@ Available Commands:
 
 Flags:
   -a, --address string      sets the address for the endpoint (default "localhost")
+      --details             shows header details in the request
   -h, --help                help for rh
   -p, --port int            sets the port for the endpoint (default 8080)
   -r, --response_code int   sets the response code (default 200)
@@ -49,4 +51,16 @@ Flags:
 Use "rh [command] --help" for more information about a command.
 ```
 
+### Creating an HTTP endpoint
+To create an http endpoint with default settings (port 8080, return status code 200):
+```
+$ rh http
+```
+<img width="785" alt="Request Hole CLI http" src="https://user-images.githubusercontent.com/100900/120266278-474db280-c23d-11eb-9e1f-4d73d18522d5.png">
 
+### Show header details
+This option shows all the header details in the incoming request.
+```
+$ rh http --details
+```
+<img width="785" alt="Request Hole CLI details" src="https://user-images.githubusercontent.com/100900/120266674-1d48c000-c23e-11eb-8107-50db997ac3cc.png">
