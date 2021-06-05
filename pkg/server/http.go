@@ -2,12 +2,14 @@ package server
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/aaronvb/logparams"
 	"github.com/aaronvb/logrequest"
 	"github.com/aaronvb/request_hole/pkg/renderer"
 	"github.com/gorilla/mux"
+	"github.com/pterm/pterm"
 )
 
 type Http struct {
@@ -31,10 +33,11 @@ type Http struct {
 func (s *Http) Start() {
 	s.Output.Start()
 	addr := fmt.Sprintf("%s:%d", s.Addr, s.Port)
+	errorLog := log.New(&renderer.PrinterLog{Prefix: pterm.Error}, "", 0)
 
 	srv := &http.Server{
 		Addr:     addr,
-		ErrorLog: s.Output.ErrorLogger(),
+		ErrorLog: errorLog,
 		Handler:  s.routes(),
 	}
 

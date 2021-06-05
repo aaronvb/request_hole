@@ -2,7 +2,6 @@ package renderer
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"sort"
 	"strings"
@@ -57,12 +56,6 @@ func (p *Printer) startText() string {
 	}
 
 	return text
-}
-
-// ErrorLogger will create a printerLog which interfaces with Logger.
-func (p *Printer) ErrorLogger() *log.Logger {
-	errorLog := log.New(&printerLog{prefix: pterm.Error}, "", p.Port)
-	return errorLog
 }
 
 // Fatal will use the Error prefix to render the error and then exit the CLI.

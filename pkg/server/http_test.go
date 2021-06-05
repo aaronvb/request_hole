@@ -2,10 +2,8 @@ package server
 
 import (
 	"bytes"
-	"log"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 
 	"github.com/aaronvb/logrequest"
@@ -17,10 +15,9 @@ type MockPrinter struct {
 	headers map[string][]string
 }
 
-func (mp *MockPrinter) Fatal(error)              {}
-func (mp *MockPrinter) Start()                   {}
-func (mp *MockPrinter) ErrorLogger() *log.Logger { return log.New(os.Stderr, "", 0) }
 func (mp *MockPrinter) IncomingRequest(fields logrequest.RequestFields, params string, headers map[string][]string) {
+func (mp *MockPrinter) Fatal(error) {}
+func (mp *MockPrinter) Start()      {}
 
 func (mp *MockPrinter) IncomingRequest(fields logrequest.RequestFields, params string) {
 	mp.fields = fields
