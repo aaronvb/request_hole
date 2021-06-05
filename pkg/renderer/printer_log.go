@@ -17,5 +17,5 @@ func (pl *PrinterLog) Write(b []byte) (n int, err error) {
 	str := pl.Prefix.WithShowLineNumber(false).Sprint(string(b))
 	pterm.Println(str)
 
-	return len(str), nil
+	return len(b), nil
 }
