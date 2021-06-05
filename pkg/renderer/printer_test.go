@@ -36,6 +36,23 @@ func TestStartTextWithDetails(t *testing.T) {
 	}
 }
 
+func TestStartTextWithLogFile(t *testing.T) {
+	pterm.DisableColor()
+	printer := Printer{
+		Addr:      "localhost",
+		Port:      8080,
+		BuildInfo: map[string]string{"version": "dev"},
+		LogFile:   "rh.log"}
+	result := printer.startText()
+	expected := fmt.Sprintf(
+		"Request Hole %s\nListening on http://%s:%d\nLog: %s", "dev",
+		printer.Addr, printer.Port, printer.LogFile)
+
+	if result != expected {
+		t.Errorf("Expected %s, got %s", expected, result)
+	}
+}
+
 func TestIncomingRequestText(t *testing.T) {
 	pterm.DisableColor()
 	printer := Printer{}

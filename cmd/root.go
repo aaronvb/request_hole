@@ -9,6 +9,7 @@ var (
 	ResponseCode int
 	BuildInfo    map[string]string
 	Details      bool
+	LogFile      string
 )
 
 var rootCmd = &cobra.Command{
@@ -28,4 +29,5 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&Address, "address", "a", "localhost", "sets the address for the endpoint")
 	rootCmd.PersistentFlags().IntVarP(&ResponseCode, "response_code", "r", 200, "sets the response code")
 	rootCmd.PersistentFlags().BoolVar(&Details, "details", false, "shows header details in the request")
+	rootCmd.PersistentFlags().StringVar(&LogFile, "log", "", "writes incoming requests to the specified log file (example: --log rh.log)")
 }

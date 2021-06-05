@@ -25,6 +25,10 @@ type Http struct {
 
 	// Output is the Renderer interface.
 	Output renderer.Renderer
+
+	// LogOutput
+	LogOutput renderer.Renderer
+
 	// Determines if header details should be shown with the request
 	Details bool
 }
@@ -32,6 +36,8 @@ type Http struct {
 // Start will start the HTTP server.
 func (s *Http) Start() {
 	s.Output.Start()
+	s.LogOutput.Start()
+
 	addr := fmt.Sprintf("%s:%d", s.Addr, s.Port)
 	errorLog := log.New(&renderer.PrinterLog{Prefix: pterm.Error}, "", 0)
 
@@ -68,7 +74,10 @@ func (s *Http) logRequest(next http.Handler) http.Handler {
 		lr := logrequest.LogRequest{Request: r, Writer: w, Handler: next}
 		fields := lr.ToFields()
 		params := logparams.LogParams{Request: r, HidePrefix: true}
-		s.Output.IncomingRequest(fields, params.ToString(), r.Header)
+
+		s.Output.IncomingRequest(fields, params.ToString())
+		s.LogOutput.IncomingRequest(fields, params.ToString())
+
 		if s.Details {
 			s.Output.IncomingRequestHeaders(r.Header)
 			s.LogOutput.IncomingRequestHeaders(r.Header)

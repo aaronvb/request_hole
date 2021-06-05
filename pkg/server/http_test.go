@@ -15,7 +15,6 @@ type MockPrinter struct {
 	headers map[string][]string
 }
 
-func (mp *MockPrinter) IncomingRequest(fields logrequest.RequestFields, params string, headers map[string][]string) {
 func (mp *MockPrinter) Fatal(error) {}
 func (mp *MockPrinter) Start()      {}
 
@@ -33,7 +32,7 @@ func TestResponseCodeFlag(t *testing.T) {
 
 	renderer := &MockPrinter{}
 	for _, respCode := range tests {
-		httpServer := Http{ResponseCode: respCode, Output: renderer}
+		httpServer := Http{ResponseCode: respCode, Output: renderer, LogOutput: renderer}
 		srv := httptest.NewServer(httpServer.routes())
 		req, err := http.NewRequest(http.MethodGet, srv.URL+"/", nil)
 		if err != nil {
@@ -66,7 +65,7 @@ func TestLogRequest(t *testing.T) {
 		{http.MethodGet, "/foo/bar?hello=world", "", "{\"hello\" => \"world\"}"},
 	}
 	renderer := &MockPrinter{}
-	httpServer := Http{ResponseCode: 200, Output: renderer}
+	httpServer := Http{ResponseCode: 200, Output: renderer, LogOutput: renderer}
 	srv := httptest.NewServer(httpServer.routes())
 	defer srv.Close()
 
@@ -110,7 +109,7 @@ func TestLogRequestHeaders(t *testing.T) {
 	}
 
 	renderer := &MockPrinter{}
-	httpServer := Http{ResponseCode: 200, Output: renderer}
+	httpServer := Http{ResponseCode: 200, Output: renderer, LogOutput: renderer, Details: true}
 	srv := httptest.NewServer(httpServer.routes())
 	defer srv.Close()
 

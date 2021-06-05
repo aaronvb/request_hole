@@ -23,7 +23,12 @@ type Printer struct {
 	// Contains build info
 	BuildInfo map[string]string
 
-	// Determines if header details should be shown with the request
+	// Log file location for the CLI header that shows the user
+	// the entered log file location. Not used for writing to
+	LogFile string
+
+	// Details used in the header to show the user if they passed
+	// the flag.
 	Details bool
 }
 
@@ -54,6 +59,9 @@ func (p *Printer) startText() string {
 	if p.Details {
 		text = fmt.Sprintf("%s\nDetails: %t", text, p.Details)
 	}
+	if p.LogFile != "" {
+		text = fmt.Sprintf("%s\nLog: %s", text, p.LogFile)
+	}
 
 	return text
 }
@@ -66,7 +74,7 @@ func (p *Printer) Fatal(err error) {
 }
 
 // IncomingRequest handles the output for incoming requests to the server.
-func (p *Printer) IncomingRequest(fields logrequest.RequestFields, params string, headers map[string][]string) {
+func (p *Printer) IncomingRequest(fields logrequest.RequestFields, params string) {
 	p.Spinner.Stop()
 	prefix := pterm.Prefix{
 		Text:  fields.Method,
