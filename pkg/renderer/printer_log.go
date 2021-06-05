@@ -3,16 +3,19 @@ package renderer
 import "github.com/pterm/pterm"
 
 // printerLog is our interface to Logger and accepts a pterm prefix
-type printerLog struct {
-	prefix pterm.PrefixPrinter
+type PrinterLog struct {
+	Prefix pterm.PrefixPrinter
 }
 
 // Write will be used by the function calling our printerLog.
 // If no prefix is passed, we default to Info
-func (pl printerLog) Write(b []byte) (n int, err error) {
-	if pl.prefix.Prefix.Text == "" {
-		pl.prefix = pterm.Info
+func (pl *PrinterLog) Write(b []byte) (n int, err error) {
+	if pl.Prefix.Prefix.Text == "" {
+		pl.Prefix = pterm.Info
 	}
-	pl.prefix.WithShowLineNumber(false).Println(string(b))
+
+	str := pl.Prefix.WithShowLineNumber(false).Sprint(string(b))
+	pterm.Println(str)
+
 	return len(b), nil
 }

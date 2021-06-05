@@ -45,6 +45,7 @@ Flags:
   -a, --address string      sets the address for the endpoint (default "localhost")
       --details             shows header details in the request
   -h, --help                help for rh
+      --log string          writes incoming requests to the specified log file (example: --log rh.log)
   -p, --port int            sets the port for the endpoint (default 8080)
   -r, --response_code int   sets the response code (default 200)
 
@@ -64,6 +65,13 @@ This option shows all the header details in the incoming request.
 $ rh http --details
 ```
 <img width="785" alt="Request Hole CLI details" src="https://user-images.githubusercontent.com/100900/120266674-1d48c000-c23e-11eb-8107-50db997ac3cc.png">
+
+### Log to file
+This option will write the CLI output to the specified log file. Works with other options such as `--details`.
+```
+$ rh http --log rh.log
+```
+<img width="787" alt="Request Hole CLI log" src="https://user-images.githubusercontent.com/100900/120877567-fac2e980-c552-11eb-8ec0-8075bc6c0cd8.png">
 
 ### Exposing Request Hole to the internet
 Sometimes we need to expose `rh` to the internet to test applications or webhooks from outside of our local dev env. The best way to do this is to use a tunneling service such as [ngrok](https://ngrok.com).

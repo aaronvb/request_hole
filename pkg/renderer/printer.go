@@ -2,7 +2,6 @@ package renderer
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"sort"
 	"strings"
@@ -24,7 +23,12 @@ type Printer struct {
 	// Contains build info
 	BuildInfo map[string]string
 
-	// Determines if header details should be shown with the request
+	// Log file location for the CLI header that shows the user
+	// the entered log file location. Not used for writing to
+	LogFile string
+
+	// Details used in the header to show the user if they passed
+	// the flag.
 	Details bool
 }
 
@@ -55,14 +59,11 @@ func (p *Printer) startText() string {
 	if p.Details {
 		text = fmt.Sprintf("%s\nDetails: %t", text, p.Details)
 	}
+	if p.LogFile != "" {
+		text = fmt.Sprintf("%s\nLog: %s", text, p.LogFile)
+	}
 
 	return text
-}
-
-// ErrorLogger will create a printerLog which interfaces with Logger.
-func (p *Printer) ErrorLogger() *log.Logger {
-	errorLog := log.New(&printerLog{prefix: pterm.Error}, "", p.Port)
-	return errorLog
 }
 
 // Fatal will use the Error prefix to render the error and then exit the CLI.
@@ -73,7 +74,7 @@ func (p *Printer) Fatal(err error) {
 }
 
 // IncomingRequest handles the output for incoming requests to the server.
-func (p *Printer) IncomingRequest(fields logrequest.RequestFields, params string, headers map[string][]string) {
+func (p *Printer) IncomingRequest(fields logrequest.RequestFields, params string) {
 	p.Spinner.Stop()
 	prefix := pterm.Prefix{
 		Text:  fields.Method,
@@ -83,10 +84,15 @@ func (p *Printer) IncomingRequest(fields logrequest.RequestFields, params string
 	text := p.incomingRequestText(fields, params)
 	pterm.Info.WithPrefix(prefix).Println(text)
 
-	if p.Details {
-		table := p.incomingRequestHeadersTable(headers)
-		pterm.Printf("%s\n\n", table)
-	}
+	p.startSpinner()
+}
+
+// IncomingRequestHeader handles the output for incoming requests headers to the server.
+func (p *Printer) IncomingRequestHeaders(headers map[string][]string) {
+	p.Spinner.Stop()
+
+	table := p.incomingRequestHeadersTable(headers)
+	pterm.Printf("%s\n\n", table)
 
 	p.startSpinner()
 }

@@ -2,12 +2,14 @@ package server
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/aaronvb/logparams"
 	"github.com/aaronvb/logrequest"
 	"github.com/aaronvb/request_hole/pkg/renderer"
 	"github.com/gorilla/mux"
+	"github.com/pterm/pterm"
 )
 
 type Http struct {
@@ -23,16 +25,25 @@ type Http struct {
 
 	// Output is the Renderer interface.
 	Output renderer.Renderer
+
+	// LogOutput
+	LogOutput renderer.Renderer
+
+	// Determines if header details should be shown with the request
+	Details bool
 }
 
 // Start will start the HTTP server.
 func (s *Http) Start() {
 	s.Output.Start()
+	s.LogOutput.Start()
+
 	addr := fmt.Sprintf("%s:%d", s.Addr, s.Port)
+	errorLog := log.New(&renderer.PrinterLog{Prefix: pterm.Error}, "", 0)
 
 	srv := &http.Server{
 		Addr:     addr,
-		ErrorLog: s.Output.ErrorLogger(),
+		ErrorLog: errorLog,
 		Handler:  s.routes(),
 	}
 
@@ -63,6 +74,13 @@ func (s *Http) logRequest(next http.Handler) http.Handler {
 		lr := logrequest.LogRequest{Request: r, Writer: w, Handler: next}
 		fields := lr.ToFields()
 		params := logparams.LogParams{Request: r, HidePrefix: true}
-		s.Output.IncomingRequest(fields, params.ToString(), r.Header)
+
+		s.Output.IncomingRequest(fields, params.ToString())
+		s.LogOutput.IncomingRequest(fields, params.ToString())
+
+		if s.Details {
+			s.Output.IncomingRequestHeaders(r.Header)
+			s.LogOutput.IncomingRequestHeaders(r.Header)
+		}
 	})
 }
