@@ -23,6 +23,8 @@ type Http struct {
 
 	// Output is the Renderer interface.
 	Output renderer.Renderer
+	// Determines if header details should be shown with the request
+	Details bool
 }
 
 // Start will start the HTTP server.
@@ -64,5 +66,9 @@ func (s *Http) logRequest(next http.Handler) http.Handler {
 		fields := lr.ToFields()
 		params := logparams.LogParams{Request: r, HidePrefix: true}
 		s.Output.IncomingRequest(fields, params.ToString(), r.Header)
+		if s.Details {
+			s.Output.IncomingRequestHeaders(r.Header)
+			s.LogOutput.IncomingRequestHeaders(r.Header)
+		}
 	})
 }

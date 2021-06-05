@@ -20,7 +20,25 @@ func init() {
 }
 
 func http(cmd *cobra.Command, args []string) {
-	renderer := &renderer.Printer{Port: Port, Addr: Address, BuildInfo: BuildInfo, Details: Details}
-	httpServer := server.Http{Addr: Address, Port: Port, ResponseCode: ResponseCode, Output: renderer}
+	logOutput := &renderer.Logger{
+		File: LogFile,
+		Port: Port,
+		Addr: Address,
+	}
+	output := &renderer.Printer{
+		Port:      Port,
+		Addr:      Address,
+		BuildInfo: BuildInfo,
+		LogFile:   LogFile,
+		Details:   Details}
+
+	httpServer := server.Http{
+		Addr:         Address,
+		Port:         Port,
+		ResponseCode: ResponseCode,
+		Output:       output,
+		LogOutput:    logOutput,
+		Details:      Details}
+
 	httpServer.Start()
 }

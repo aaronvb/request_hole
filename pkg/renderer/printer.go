@@ -83,10 +83,15 @@ func (p *Printer) IncomingRequest(fields logrequest.RequestFields, params string
 	text := p.incomingRequestText(fields, params)
 	pterm.Info.WithPrefix(prefix).Println(text)
 
-	if p.Details {
-		table := p.incomingRequestHeadersTable(headers)
-		pterm.Printf("%s\n\n", table)
-	}
+	p.startSpinner()
+}
+
+// IncomingRequestHeader handles the output for incoming requests headers to the server.
+func (p *Printer) IncomingRequestHeaders(headers map[string][]string) {
+	p.Spinner.Stop()
+
+	table := p.incomingRequestHeadersTable(headers)
+	pterm.Printf("%s\n\n", table)
 
 	p.startSpinner()
 }

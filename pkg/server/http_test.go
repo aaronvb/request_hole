@@ -21,8 +21,13 @@ func (mp *MockPrinter) Fatal(error)              {}
 func (mp *MockPrinter) Start()                   {}
 func (mp *MockPrinter) ErrorLogger() *log.Logger { return log.New(os.Stderr, "", 0) }
 func (mp *MockPrinter) IncomingRequest(fields logrequest.RequestFields, params string, headers map[string][]string) {
+
+func (mp *MockPrinter) IncomingRequest(fields logrequest.RequestFields, params string) {
 	mp.fields = fields
 	mp.params = params
+}
+
+func (mp *MockPrinter) IncomingRequestHeaders(headers map[string][]string) {
 	mp.headers = headers
 }
 
