@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var getCmd = &cobra.Command{
+var httpCmd = &cobra.Command{
 	Use:   "http",
 	Short: "Creates an http endpoint",
 	Long: `rh: http
@@ -16,7 +16,7 @@ Create an endpoint that accepts http connections.
 }
 
 func init() {
-	rootCmd.AddCommand(getCmd)
+	rootCmd.AddCommand(httpCmd)
 }
 
 func http(cmd *cobra.Command, args []string) {
