@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/aaronvb/request_hole/pkg/protocol"
 	"github.com/aaronvb/request_hole/pkg/renderer"
 	"github.com/aaronvb/request_hole/pkg/server"
 	"github.com/spf13/cobra"
@@ -20,25 +21,42 @@ func init() {
 }
 
 func http(cmd *cobra.Command, args []string) {
-	logOutput := &renderer.Logger{
-		File: LogFile,
-		Port: Port,
-		Addr: Address,
-	}
-	output := &renderer.Printer{
-		Port:      Port,
-		Addr:      Address,
-		BuildInfo: BuildInfo,
-		LogFile:   LogFile,
-		Details:   Details}
+	renderers := make([]renderer.Renderer, 0)
 
-	httpServer := server.Http{
+	// Collect flag data into struct to use with renderers
+	flagData := server.FlagData{
+		Addr:         Address,
+		BuildInfo:    BuildInfo,
+		Details:      Details,
+		LogFile:      LogFile,
+		Port:         Port,
+		ResponseCode: ResponseCode,
+	}
+
+	printer := &renderer.Printer{Details: Details}
+	renderers = append(renderers, printer)
+
+	if LogFile != "" {
+		logger := &renderer.Logger{
+			FilePath: LogFile,
+			Details:  Details,
+			Addr:     Address,
+			Port:     Port,
+		}
+		renderers = append(renderers, logger)
+	}
+
+	httpServer := &protocol.Http{
 		Addr:         Address,
 		Port:         Port,
 		ResponseCode: ResponseCode,
-		Output:       output,
-		LogOutput:    logOutput,
-		Details:      Details}
+	}
 
-	httpServer.Start()
+	srv := server.Server{
+		FlagData:  flagData,
+		Protocol:  httpServer,
+		Renderers: renderers,
+	}
+
+	srv.Start()
 }

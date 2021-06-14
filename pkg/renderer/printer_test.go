@@ -5,53 +5,9 @@ import (
 	"testing"
 
 	"github.com/aaronvb/logrequest"
+	"github.com/aaronvb/request_hole/pkg/protocol"
 	"github.com/pterm/pterm"
 )
-
-func TestStartText(t *testing.T) {
-	pterm.DisableColor()
-	printer := Printer{Addr: "localhost", Port: 8080, BuildInfo: map[string]string{"version": "dev"}}
-	result := printer.startText()
-	expected := fmt.Sprintf("Request Hole %s\nListening on http://%s:%d", "dev", printer.Addr, printer.Port)
-
-	if result != expected {
-		t.Errorf("Expected %s, got %s", expected, result)
-	}
-}
-
-func TestStartTextWithDetails(t *testing.T) {
-	pterm.DisableColor()
-	printer := Printer{
-		Addr:      "localhost",
-		Port:      8080,
-		BuildInfo: map[string]string{"version": "dev"},
-		Details:   true}
-	result := printer.startText()
-	expected := fmt.Sprintf(
-		"Request Hole %s\nListening on http://%s:%d\nDetails: %t", "dev",
-		printer.Addr, printer.Port, printer.Details)
-
-	if result != expected {
-		t.Errorf("Expected %s, got %s", expected, result)
-	}
-}
-
-func TestStartTextWithLogFile(t *testing.T) {
-	pterm.DisableColor()
-	printer := Printer{
-		Addr:      "localhost",
-		Port:      8080,
-		BuildInfo: map[string]string{"version": "dev"},
-		LogFile:   "rh.log"}
-	result := printer.startText()
-	expected := fmt.Sprintf(
-		"Request Hole %s\nListening on http://%s:%d\nLog: %s", "dev",
-		printer.Addr, printer.Port, printer.LogFile)
-
-	if result != expected {
-		t.Errorf("Expected %s, got %s", expected, result)
-	}
-}
 
 func TestIncomingRequestText(t *testing.T) {
 	pterm.DisableColor()
@@ -61,7 +17,8 @@ func TestIncomingRequestText(t *testing.T) {
 		Url:    "/foobar",
 	}
 	params := "{\"foo\" => \"bar\"}"
-	result := printer.incomingRequestText(fields, params)
+	rp := protocol.RequestPayload{Fields: fields, Params: params}
+	result := printer.incomingRequestText(rp)
 	expected := fmt.Sprintf("%s %s", fields.Url, params)
 
 	if result != expected {
@@ -76,7 +33,8 @@ func TestIncomingRequestHeadersTables(t *testing.T) {
 		"hello": {"world", "foobar"},
 		"foo":   {"bar"},
 	}
-	result := printer.incomingRequestHeadersTable(headers)
+	rp := protocol.RequestPayload{Headers: headers}
+	result := printer.incomingRequestHeadersTable(rp)
 
 	headersForTable := [][]string{}
 	headersForTable = append(headersForTable, []string{"Header", "Value"})

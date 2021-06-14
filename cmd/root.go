@@ -5,11 +5,11 @@ import "github.com/spf13/cobra"
 
 var (
 	Address      string
-	Port         int
-	ResponseCode int
 	BuildInfo    map[string]string
 	Details      bool
 	LogFile      string
+	Port         int
+	ResponseCode int
 )
 
 var rootCmd = &cobra.Command{

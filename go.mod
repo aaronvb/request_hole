@@ -1,6 +1,6 @@
 module github.com/aaronvb/request_hole
 
-go 1.15
+go 1.16
 
 require (
 	github.com/aaronvb/logparams v1.0.0

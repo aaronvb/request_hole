@@ -5,89 +5,87 @@ import (
 	"os"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
-	"github.com/aaronvb/logrequest"
+	"github.com/aaronvb/request_hole/pkg/protocol"
 	"github.com/pterm/pterm"
 )
 
 // Logger outputs to a log file.
 type Logger struct {
-	// File points to the file that we write to.
-	File string
+	// FilePathis the path to the log file which we write to.
+	// Default is blank unless passed as a flag to the CLI.
+	FilePath string
 
-	// Fields for startText
-	Port int
+	// Details will log the headers with the request. Default is false unless the
+	// flag is passed.
+	Details bool
+
+	// Address and Port are used for the start text
 	Addr string
+	Port int
+
+	// LogFile is the open log file
+	logFile *os.File
 }
 
 // Start writes the initial server start to the log file.
-func (l *Logger) Start() {
-	if l.File == "" {
-		return
-	}
-
-	f, err := os.OpenFile(l.File, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+func (l *Logger) Start(wg *sync.WaitGroup, rp chan protocol.RequestPayload, q chan int) {
+	f, err := os.OpenFile(l.FilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		l.Fatal(err)
+		fatal(err)
 	}
 
 	defer f.Close()
+	defer wg.Done()
 
 	str := fmt.Sprintf("%s: %s\n", time.Now().Format("2006/02/01 15:04:05"), l.startText())
 	f.WriteString(str)
+
+	// Set logFile to open file
+	l.logFile = f
+
+	// Receive incoming requests on RequestPayload channel or
+	// exit blocking select if quit is received from protocol
+	for {
+		select {
+		case r := <-rp:
+			l.incomingRequest(r)
+		case <-q:
+			return
+		}
+	}
 }
 
+// startText returns the starting log string
 func (l *Logger) startText() string {
 	return fmt.Sprintf("Listening on http://%s:%d", l.Addr, l.Port)
 }
 
-// Fatal will use the Error prefix to render the error and then exit the CLI.
-func (l *Logger) Fatal(err error) {
+// fatal will use the Error prefix to render the error and then exit the CLI.
+func fatal(err error) {
 	pterm.Error.WithShowLineNumber(false).Println(err)
 	os.Exit(1)
 }
 
-// IncomingRequest writes the incoming requests to the log file.
-func (l *Logger) IncomingRequest(fields logrequest.RequestFields, params string) {
-	if l.File == "" {
-		return
+// incomingRequest handles the log output for incoming requests to the protocol..
+func (l *Logger) incomingRequest(r protocol.RequestPayload) {
+	str := fmt.Sprintf("%s: %s\n", time.Now().Format("2006/02/01 15:04:05"), l.incomingRequestText(r))
+	l.logFile.WriteString(str)
+
+	if l.Details {
+		headersWithJoinedValues, keys := l.incomingRequestHeaders(r.Headers)
+		for _, key := range keys {
+			str := fmt.Sprintf("%s: %s: %s\n", time.Now().Format("2006/02/01 15:04:05"), key, headersWithJoinedValues[key])
+			l.logFile.WriteString(str)
+		}
 	}
-
-	f, err := os.OpenFile(l.File, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		l.Fatal(err)
-	}
-
-	defer f.Close()
-
-	str := fmt.Sprintf("%s: %s\n", time.Now().Format("2006/02/01 15:04:05"), l.incomingRequestText(fields, params))
-	f.WriteString(str)
 }
 
-func (l *Logger) incomingRequestText(fields logrequest.RequestFields, params string) string {
-	return fmt.Sprintf("%s %s %s", fields.Method, fields.Url, params)
-}
-
-// IncomingRequestHeaders writes the incoming request headers to the log file
-func (l *Logger) IncomingRequestHeaders(headers map[string][]string) {
-	if l.File == "" {
-		return
-	}
-
-	f, err := os.OpenFile(l.File, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		l.Fatal(err)
-	}
-
-	defer f.Close()
-
-	headersWithJoinedValues, keys := l.incomingRequestHeaders(headers)
-
-	for _, key := range keys {
-		str := fmt.Sprintf("%s: %s: %s\n", time.Now().Format("2006/02/01 15:04:05"), key, headersWithJoinedValues[key])
-		f.WriteString(str)
-	}
+// incomingRequestText converts the RequestPayload into a printable string.
+func (l *Logger) incomingRequestText(r protocol.RequestPayload) string {
+	return fmt.Sprintf("%s %s %s", r.Fields.Method, r.Fields.Url, r.Params)
 }
 
 // incomingRequestHeaders takes the headers from the request, sorts them alphabetically,
