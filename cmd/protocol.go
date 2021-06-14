@@ -31,6 +31,8 @@ func http(cmd *cobra.Command, args []string) {
 		LogFile:      LogFile,
 		Port:         Port,
 		ResponseCode: ResponseCode,
+		Web:          Web,
+		WebPort:      WebPort,
 	}
 
 	printer := &renderer.Printer{Details: Details}

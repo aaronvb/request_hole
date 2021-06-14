@@ -10,6 +10,8 @@ var (
 	LogFile      string
 	Port         int
 	ResponseCode int
+	Web          bool
+	WebPort      int
 )
 
 var rootCmd = &cobra.Command{
@@ -30,4 +32,8 @@ func init() {
 	rootCmd.PersistentFlags().IntVarP(&ResponseCode, "response_code", "r", 200, "sets the response code")
 	rootCmd.PersistentFlags().BoolVar(&Details, "details", false, "shows header details in the request")
 	rootCmd.PersistentFlags().StringVar(&LogFile, "log", "", "writes incoming requests to the specified log file (example: --log rh.log)")
+
+	// Web server renderer
+	rootCmd.PersistentFlags().BoolVar(&Web, "web", false, "runs a web server to show incoming requests")
+	rootCmd.PersistentFlags().IntVar(&WebPort, "web_port", 8081, "sets the port for the web server")
 }

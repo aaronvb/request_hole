@@ -45,6 +45,11 @@ type FlagData struct {
 	// Default is 200 if no response code is passed.
 	ResponseCode int
 
+	// Web determines if we use the web renderer, otherwise defaults to the printer renderer.
+	Web bool
+
+	// WebPort defines which port we host the web renderer at, defaults to 8081.
+	WebPort int
 }
 
 // Start handles all of the orchestration.
@@ -108,6 +113,10 @@ func (s *Server) startText() string {
 		Sprintf(s.FlagData.BuildInfo["version"])
 
 	text := fmt.Sprintf("%s %s\nListening on http://%s:%d", primary, version, s.FlagData.Addr, s.FlagData.Port)
+
+	if s.FlagData.Web {
+		text = fmt.Sprintf("%s\nWeb running on: http://localhost:%d", text, s.FlagData.WebPort)
+	}
 
 	if s.FlagData.Details {
 		text = fmt.Sprintf("%s\nDetails: %t", text, s.FlagData.Details)
