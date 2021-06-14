@@ -6,10 +6,11 @@ import (
 	"testing"
 
 	"github.com/aaronvb/logrequest"
+	"github.com/aaronvb/request_hole/pkg/protocol"
 )
 
 func TestLoggerStartText(t *testing.T) {
-	logger := Logger{Port: 123, Addr: "foo.bar"}
+	logger := Logger{Addr: "localhost", Port: 1234}
 	text := logger.startText()
 	expected := fmt.Sprintf("Listening on http://%s:%d", logger.Addr, logger.Port)
 
@@ -25,7 +26,8 @@ func TestLoggerIncomingRequest(t *testing.T) {
 		Url:    "/foobar",
 	}
 	params := "{\"foo\" => \"bar\"}"
-	text := logger.incomingRequestText(fields, params)
+	rp := protocol.RequestPayload{Fields: fields, Params: params}
+	text := logger.incomingRequestText(rp)
 	expected := fmt.Sprintf("%s %s %s", fields.Method, fields.Url, params)
 
 	if text != expected {
