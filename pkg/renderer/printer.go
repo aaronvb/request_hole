@@ -2,11 +2,11 @@ package renderer
 
 import (
 	"fmt"
-	"os"
 	"sort"
 	"strings"
+	"sync"
 
-	"github.com/aaronvb/logrequest"
+	"github.com/aaronvb/request_hole/pkg/protocol"
 	"github.com/pterm/pterm"
 )
 
@@ -16,102 +16,67 @@ type Printer struct {
 	// Spinner is a constant, we set it during the start method and can later stop it when we exit.
 	Spinner *pterm.SpinnerPrinter
 
-	// Fields for startText
-	Port int
-	Addr string
-
-	// Contains build info
-	BuildInfo map[string]string
-
-	// Log file location for the CLI header that shows the user
-	// the entered log file location. Not used for writing to
-	LogFile string
-
-	// Details used in the header to show the user if they passed
-	// the flag.
+	// Details will output the headers with the request. Default is false unless the
+	// flag is passed.
 	Details bool
 }
 
-// Start renders the initial header and the spinner. The Spinner should be consistent during
-// all requests, unless we explicitly tell it to stop.
-func (p *Printer) Start() {
-	// Clear the terminal
-	clear()
-
-	text := p.startText()
-	pterm.DefaultBox.
-		WithBoxStyle(pterm.NewStyle(pterm.FgGray)).
-		Printfln(text)
+// Start renders the spinner and starts receive incoming requests from the channel.
+func (p *Printer) Start(wg *sync.WaitGroup, rp chan protocol.RequestPayload, q chan int) {
+	defer wg.Done()
 
 	p.startSpinner()
-}
 
-func (p *Printer) startText() string {
-	primary := pterm.DefaultBasicText.
-		WithStyle(pterm.NewStyle(pterm.Bold)).
-		Sprintf("Request Hole")
-	version := pterm.DefaultBasicText.
-		WithStyle(pterm.NewStyle(pterm.Fuzzy)).
-		Sprintf(p.BuildInfo["version"])
-
-	text := fmt.Sprintf("%s %s\nListening on http://%s:%d", primary, version, p.Addr, p.Port)
-
-	if p.Details {
-		text = fmt.Sprintf("%s\nDetails: %t", text, p.Details)
+	// Receive incoming requests on RequestPayload channel or
+	// exit blocking select if quit is received from protocol
+	for {
+		select {
+		case r := <-rp:
+			p.incomingRequest(r)
+		case <-q:
+			return
+		}
 	}
-	if p.LogFile != "" {
-		text = fmt.Sprintf("%s\nLog: %s", text, p.LogFile)
-	}
-
-	return text
 }
 
-// Fatal will use the Error prefix to render the error and then exit the CLI.
-func (p *Printer) Fatal(err error) {
+// incomingRequest handles the output for incoming requests to the protocol.
+func (p *Printer) incomingRequest(r protocol.RequestPayload) {
 	p.Spinner.Stop()
-	pterm.Error.WithShowLineNumber(false).Println(err)
-	os.Exit(1)
-}
 
-// IncomingRequest handles the output for incoming requests to the server.
-func (p *Printer) IncomingRequest(fields logrequest.RequestFields, params string) {
-	p.Spinner.Stop()
 	prefix := pterm.Prefix{
-		Text:  fields.Method,
+		Text:  r.Fields.Method,
 		Style: pterm.NewStyle(pterm.BgGray, pterm.FgWhite),
 	}
 
-	text := p.incomingRequestText(fields, params)
+	text := p.incomingRequestText(r)
 	pterm.Info.WithPrefix(prefix).Println(text)
 
-	p.startSpinner()
-}
-
-// IncomingRequestHeader handles the output for incoming requests headers to the server.
-func (p *Printer) IncomingRequestHeaders(headers map[string][]string) {
-	p.Spinner.Stop()
-
-	table := p.incomingRequestHeadersTable(headers)
-	pterm.Printf("%s\n\n", table)
+	// If the details flag is passed we print headers as well,
+	// default is false if no flag is passed.
+	if p.Details {
+		table := p.incomingRequestHeadersTable(r)
+		pterm.Printf("%s\n", table)
+	}
 
 	p.startSpinner()
 }
 
-func (p *Printer) incomingRequestText(fields logrequest.RequestFields, params string) string {
+// incomingRequestText converts the RequestPayload into a printable string.
+func (p *Printer) incomingRequestText(r protocol.RequestPayload) string {
 	urlWithStyle := pterm.DefaultBasicText.
-		WithStyle(pterm.NewStyle(pterm.FgWhite)).Sprintf(fields.Url)
+		WithStyle(pterm.NewStyle(pterm.FgWhite)).Sprintf(r.Fields.Url)
 	paramsWithStyle := pterm.DefaultBasicText.
-		WithStyle(pterm.NewStyle(pterm.Fuzzy)).Sprintf(params)
+		WithStyle(pterm.NewStyle(pterm.Fuzzy)).Sprintf(r.Params)
 
 	text := fmt.Sprintf("%s %s", urlWithStyle, paramsWithStyle)
 	return text
 }
 
-// incomingRequestHeadersTable constructs the headers table string.
+// incomingRequestHeadersTable constructs the headers table string from the RequestPayload.
 // This takes the headers map from the request and sorts it alphabetically by key.
-func (p *Printer) incomingRequestHeadersTable(headers map[string][]string) string {
-	keys := make([]string, 0, len(headers))
-	for key := range headers {
+func (p *Printer) incomingRequestHeadersTable(r protocol.RequestPayload) string {
+	keys := make([]string, 0, len(r.Headers))
+	for key := range r.Headers {
 		keys = append(keys, key)
 	}
 
@@ -123,7 +88,7 @@ func (p *Printer) incomingRequestHeadersTable(headers map[string][]string) strin
 	headersFormatted = append(headersFormatted, headerRow)
 
 	for _, key := range keys {
-		value := strings.Join(headers[key], ",")
+		value := strings.Join(r.Headers[key], ",")
 		headersRow := []string{key, value}
 		headersFormatted = append(headersFormatted, headersRow)
 	}
@@ -156,9 +121,4 @@ func (p *Printer) startSpinner() {
 			"⠓").Start(listeningText)
 
 	p.Spinner = spinner
-}
-
-// clear will clear the terminal, called at the start.
-func clear() {
-	print("\033[H\033[2J")
 }
