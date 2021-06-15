@@ -185,3 +185,31 @@ func TestLogRequestManyRenderers(t *testing.T) {
 		}
 	}
 }
+
+func TestQuitRenderers(t *testing.T) {
+	q1 := make(chan int, 1)
+	q2 := make(chan int, 1)
+	chans := []chan int{q1, q2}
+
+	httpServer := Http{rendererQuitChannels: chans}
+	httpServer.quitRenderers()
+	expectedQ1 := <-q1
+	expectedQ2 := <-q2
+
+	if expectedQ1 != 1 || expectedQ2 != 1 {
+		t.Error("Expected channel to receive quit signal")
+	}
+}
+
+func TestErrorFromRenderer(t *testing.T) {
+	e1 := make(chan int, 1)
+	e2 := make(chan int, 1)
+	chans := []chan int{e1, e2}
+
+	e1 <- 1
+	err := <-merge(chans)
+
+	if err != 1 {
+		t.Error("Expect	channel to receive error signal")
+	}
+}
