@@ -62,6 +62,7 @@ func (s *Http) Start(c []chan RequestPayload, quits []chan int, errors []chan in
 	// renderers, which will exit the main program.
 	for range merge(errors) {
 		s.quitRenderers()
+		return
 	}
 }
 
