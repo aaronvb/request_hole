@@ -35,8 +35,13 @@ func http(cmd *cobra.Command, args []string) {
 		WebPort:      WebPort,
 	}
 
-	printer := &renderer.Printer{Details: Details}
-	renderers = append(renderers, printer)
+	if Web {
+		web := &renderer.Web{Port: WebPort}
+		renderers = append(renderers, web)
+	} else {
+		printer := &renderer.Printer{Details: Details}
+		renderers = append(renderers, printer)
+	}
 
 	if LogFile != "" {
 		logger := &renderer.Logger{
