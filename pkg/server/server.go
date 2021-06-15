@@ -73,21 +73,25 @@ func (s *Server) Start() {
 
 	var wg sync.WaitGroup
 	var rpChans []chan protocol.RequestPayload
-	var quitChans []chan int
+	var rendererQuitChans []chan int
+	var rendererErrorChans []chan int
 
+	// Start the renderers
 	for _, renderer := range s.Renderers {
 		rp := make(chan protocol.RequestPayload)
 		q := make(chan int)
+		e := make(chan int)
 
 		wg.Add(1)
-		go renderer.Start(&wg, rp, q)
+		go renderer.Start(&wg, rp, q, e)
 
 		rpChans = append(rpChans, rp)
-		quitChans = append(quitChans, q)
+		rendererQuitChans = append(rendererQuitChans, q)
+		rendererErrorChans = append(rendererErrorChans, e)
 	}
 
-	wg.Add(1)
-	go s.Protocol.Start(&wg, rpChans, quitChans)
+	// Start the server that accepts incoming requests
+	go s.Protocol.Start(rpChans, rendererQuitChans, rendererErrorChans)
 
 	wg.Wait()
 }

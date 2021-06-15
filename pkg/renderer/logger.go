@@ -28,13 +28,22 @@ type Logger struct {
 
 	// LogFile is the open log file
 	logFile *os.File
+
+	// errorChan is used to let the protocol server know that this renderer
+	// has encountered an error.
+	errorChan chan int
 }
 
 // Start writes the initial server start to the log file.
-func (l *Logger) Start(wg *sync.WaitGroup, rp chan protocol.RequestPayload, q chan int) {
+func (l *Logger) Start(wg *sync.WaitGroup, rp chan protocol.RequestPayload, q chan int, e chan int) {
+	// Set error channel to be used in fatal
+	l.errorChan = e
+
 	f, err := os.OpenFile(l.FilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		fatal(err)
+		// If we fail to open the file, call fatal, which will print the error
+		// and send a signal over the error channel.
+		l.fatal(err)
 	}
 
 	defer f.Close()
@@ -53,6 +62,7 @@ func (l *Logger) Start(wg *sync.WaitGroup, rp chan protocol.RequestPayload, q ch
 		case r := <-rp:
 			l.incomingRequest(r)
 		case <-q:
+			close(rp)
 			return
 		}
 	}
@@ -64,9 +74,9 @@ func (l *Logger) startText() string {
 }
 
 // fatal will use the Error prefix to render the error and then exit the CLI.
-func fatal(err error) {
+func (l *Logger) fatal(err error) {
 	pterm.Error.WithShowLineNumber(false).Println(err)
-	os.Exit(1)
+	l.errorChan <- 1
 }
 
 // incomingRequest handles the log output for incoming requests to the protocol..

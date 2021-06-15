@@ -1,8 +1,6 @@
 package protocol
 
 import (
-	"sync"
-
 	"github.com/aaronvb/logrequest"
 )
 
@@ -11,7 +9,7 @@ import (
 // If a protocol closes(ie: from and error), we use the second channel which is used to
 // send an int(1 signals quit).
 type Protocol interface {
-	Start(*sync.WaitGroup, []chan RequestPayload, []chan int)
+	Start([]chan RequestPayload, []chan int, []chan int)
 }
 
 // RequestPayload is the request payload we receive from an incoming request that we use with

@@ -22,7 +22,7 @@ type Printer struct {
 }
 
 // Start renders the spinner and starts receive incoming requests from the channel.
-func (p *Printer) Start(wg *sync.WaitGroup, rp chan protocol.RequestPayload, q chan int) {
+func (p *Printer) Start(wg *sync.WaitGroup, rp chan protocol.RequestPayload, q chan int, e chan int) {
 	defer wg.Done()
 
 	p.startSpinner()
@@ -34,6 +34,7 @@ func (p *Printer) Start(wg *sync.WaitGroup, rp chan protocol.RequestPayload, q c
 		case r := <-rp:
 			p.incomingRequest(r)
 		case <-q:
+			close(rp)
 			return
 		}
 	}
