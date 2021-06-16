@@ -1,0 +1,27 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+type RequestFields {
+  method: String!
+	url: String!
+	remote_address: String!
+	protocol: String!
+	time: Time!
+	duration: TimeDuration!
+	status_code: Int!
+}
+
+type RequestPayload {
+  fields: RequestFields!
+  params: String!
+  headers: MapSlice!
+}
+
+type Query {
+  requests: [RequestPayload!]!
+}
+
+scalar Time
+scalar TimeDuration
+scalar MapSlice
