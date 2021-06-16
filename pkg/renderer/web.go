@@ -7,6 +7,10 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/aaronvb/request_hole/graph"
+	"github.com/aaronvb/request_hole/graph/generated"
 	"github.com/aaronvb/request_hole/pkg/protocol"
 	"github.com/gorilla/mux"
 	"github.com/pterm/pterm"
@@ -55,6 +59,15 @@ func (web *Web) Start(wg *sync.WaitGroup, rp chan protocol.RequestPayload, q cha
 func (web *Web) routes() http.Handler {
 	r := mux.NewRouter()
 	r.HandleFunc("/requests", web.requestsHandler).Methods("GET")
+	r.Handle("/graphql", playground.Handler("GraphQL playground", "/query"))
+
+	// Pass pointer to requests
+	gqlSrv := handler.NewDefaultServer(
+		generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{
+			RequestPayloads: &web.requests,
+		}}))
+
+	r.Handle("/query", gqlSrv)
 
 	return r
 }
