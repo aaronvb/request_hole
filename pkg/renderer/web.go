@@ -1,10 +1,13 @@
 package renderer
 
 import (
+	"embed"
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"log"
 	"net/http"
+	"os"
 	"sync"
 
 	"github.com/99designs/gqlgen/graphql/handler"
@@ -16,9 +19,13 @@ import (
 	"github.com/pterm/pterm"
 )
 
+//go:embed static
+var embededFiles embed.FS
+
 type Web struct {
-	Port     int
-	requests []protocol.RequestPayload
+	Port         int
+	requests     []protocol.RequestPayload
+	BuildVersion string
 }
 
 func (web *Web) Start(wg *sync.WaitGroup, rp chan protocol.RequestPayload, q chan int, e chan int) {
@@ -59,6 +66,8 @@ func (web *Web) Start(wg *sync.WaitGroup, rp chan protocol.RequestPayload, q cha
 func (web *Web) routes() http.Handler {
 	r := mux.NewRouter()
 	r.HandleFunc("/requests", web.requestsHandler).Methods("GET")
+	r.HandleFunc("/", web.indexHandler).Methods("GET")
+
 	r.Handle("/graphql", playground.Handler("GraphQL playground", "/query"))
 
 	// Pass pointer to requests
@@ -76,6 +85,24 @@ func (web *Web) routes() http.Handler {
 func (web *Web) requestsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(web.requests)
+}
+
+func (web *Web) indexHandler(w http.ResponseWriter, r *http.Request) {
+	dev := web.BuildVersion == "dev"
+	http.FileServer(getFileSystem(dev)).ServeHTTP(w, r)
+}
+
+func getFileSystem(useOS bool) http.FileSystem {
+	if useOS {
+		return http.FS(os.DirFS("pkg/renderer/static"))
+	}
+
+	fsys, err := fs.Sub(embededFiles, "static")
+	if err != nil {
+		panic(err)
+	}
+
+	return http.FS(fsys)
 }
 
 // incomingRequest is called when we receive a RequestPayload over the channel
