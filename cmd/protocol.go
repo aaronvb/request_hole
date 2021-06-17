@@ -13,14 +13,14 @@ var httpCmd = &cobra.Command{
 	Long: `rh: http
 Create an endpoint that accepts http connections.
 `,
-	Run: http,
+	Run: httpCommand,
 }
 
 func init() {
 	rootCmd.AddCommand(httpCmd)
 }
 
-func http(cmd *cobra.Command, args []string) {
+func httpCommand(cmd *cobra.Command, args []string) {
 	renderers := make([]renderer.Renderer, 0)
 
 	// Collect flag data into struct to use with renderers
