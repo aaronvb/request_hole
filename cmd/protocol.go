@@ -36,7 +36,7 @@ func httpCommand(cmd *cobra.Command, args []string) {
 	}
 
 	if Web {
-		web := &renderer.Web{Port: WebPort, BuildVersion: BuildInfo["version"]}
+		web := &renderer.Web{Port: WebPort, StaticFiles: StaticFS}
 		renderers = append(renderers, web)
 	} else {
 		printer := &renderer.Printer{Details: Details}

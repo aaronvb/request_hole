@@ -1,7 +1,11 @@
 // Package cmd contains all of the CLI commands
 package cmd
 
-import "github.com/spf13/cobra"
+import (
+	"net/http"
+
+	"github.com/spf13/cobra"
+)
 
 var (
 	Address      string
@@ -12,6 +16,7 @@ var (
 	ResponseCode int
 	Web          bool
 	WebPort      int
+	StaticFS     http.FileSystem
 )
 
 var rootCmd = &cobra.Command{
@@ -21,8 +26,9 @@ var rootCmd = &cobra.Command{
 This CLI tool will let you create a temporary API endpoint for testing purposes.`,
 }
 
-func Execute(buildInfo map[string]string) error {
+func Execute(buildInfo map[string]string, staticFS http.FileSystem) error {
 	BuildInfo = buildInfo
+	StaticFS = staticFS
 	return rootCmd.Execute()
 }
 
