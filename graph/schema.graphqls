@@ -12,10 +12,18 @@ type RequestFields {
 	status_code: Int!
 }
 
+type ParamFields {
+	form: MapString
+	query: MapString
+	json: Map
+	json_array: [Map]
+}
+
 type RequestPayload {
   fields: RequestFields!
-  params: String!
+  params: String
   headers: MapSlice!
+	param_fields: ParamFields!
 }
 
 type Query {
@@ -25,3 +33,5 @@ type Query {
 scalar Time
 scalar TimeDuration
 scalar MapSlice
+scalar MapString
+scalar Map

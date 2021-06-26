@@ -13,6 +13,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
+	"github.com/aaronvb/logparams"
 	"github.com/aaronvb/logrequest"
 	"github.com/aaronvb/request_hole/graph/model"
 	"github.com/aaronvb/request_hole/pkg/protocol"
@@ -45,6 +46,13 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	ParamFields struct {
+		Form      func(childComplexity int) int
+		Json      func(childComplexity int) int
+		JsonArray func(childComplexity int) int
+		Query     func(childComplexity int) int
+	}
+
 	Query struct {
 		Requests func(childComplexity int) int
 	}
@@ -60,9 +68,10 @@ type ComplexityRoot struct {
 	}
 
 	RequestPayload struct {
-		Fields  func(childComplexity int) int
-		Headers func(childComplexity int) int
-		Params  func(childComplexity int) int
+		Fields      func(childComplexity int) int
+		Headers     func(childComplexity int) int
+		ParamFields func(childComplexity int) int
+		Params      func(childComplexity int) int
 	}
 }
 
@@ -84,6 +93,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "ParamFields.form":
+		if e.complexity.ParamFields.Form == nil {
+			break
+		}
+
+		return e.complexity.ParamFields.Form(childComplexity), true
+
+	case "ParamFields.json":
+		if e.complexity.ParamFields.Json == nil {
+			break
+		}
+
+		return e.complexity.ParamFields.Json(childComplexity), true
+
+	case "ParamFields.json_array":
+		if e.complexity.ParamFields.JsonArray == nil {
+			break
+		}
+
+		return e.complexity.ParamFields.JsonArray(childComplexity), true
+
+	case "ParamFields.query":
+		if e.complexity.ParamFields.Query == nil {
+			break
+		}
+
+		return e.complexity.ParamFields.Query(childComplexity), true
 
 	case "Query.requests":
 		if e.complexity.Query.Requests == nil {
@@ -154,6 +191,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.RequestPayload.Headers(childComplexity), true
+
+	case "RequestPayload.param_fields":
+		if e.complexity.RequestPayload.ParamFields == nil {
+			break
+		}
+
+		return e.complexity.RequestPayload.ParamFields(childComplexity), true
 
 	case "RequestPayload.params":
 		if e.complexity.RequestPayload.Params == nil {
@@ -226,10 +270,18 @@ type RequestFields {
 	status_code: Int!
 }
 
+type ParamFields {
+	form: MapString
+	query: MapString
+	json: Map
+	json_array: [Map]
+}
+
 type RequestPayload {
   fields: RequestFields!
-  params: String!
+  params: String
   headers: MapSlice!
+	param_fields: ParamFields!
 }
 
 type Query {
@@ -238,7 +290,9 @@ type Query {
 
 scalar Time
 scalar TimeDuration
-scalar MapSlice`, BuiltIn: false},
+scalar MapSlice
+scalar MapString
+scalar Map`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
@@ -298,6 +352,134 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _ParamFields_form(ctx context.Context, field graphql.CollectedField, obj *logparams.ParamFields) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ParamFields",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Form, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(map[string]string)
+	fc.Result = res
+	return ec.marshalOMapString2map(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ParamFields_query(ctx context.Context, field graphql.CollectedField, obj *logparams.ParamFields) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ParamFields",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Query, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(map[string]string)
+	fc.Result = res
+	return ec.marshalOMapString2map(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ParamFields_json(ctx context.Context, field graphql.CollectedField, obj *logparams.ParamFields) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ParamFields",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Json, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(map[string]interface{})
+	fc.Result = res
+	return ec.marshalOMap2map(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ParamFields_json_array(ctx context.Context, field graphql.CollectedField, obj *logparams.ParamFields) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ParamFields",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.JsonArray, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]map[string]interface{})
+	fc.Result = res
+	return ec.marshalOMap2ᚕmap(ctx, field.Selections, res)
+}
 
 func (ec *executionContext) _Query_requests(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
@@ -710,14 +892,11 @@ func (ec *executionContext) _RequestPayload_params(ctx context.Context, field gr
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _RequestPayload_headers(ctx context.Context, field graphql.CollectedField, obj *protocol.RequestPayload) (ret graphql.Marshaler) {
@@ -753,6 +932,41 @@ func (ec *executionContext) _RequestPayload_headers(ctx context.Context, field g
 	res := resTmp.(map[string][]string)
 	fc.Result = res
 	return ec.marshalNMapSlice2map(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _RequestPayload_param_fields(ctx context.Context, field graphql.CollectedField, obj *protocol.RequestPayload) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "RequestPayload",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ParamFields, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(logparams.ParamFields)
+	fc.Result = res
+	return ec.marshalNParamFields2githubᚗcomᚋaaronvbᚋlogparamsᚐParamFields(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) ___Directive_name(ctx context.Context, field graphql.CollectedField, obj *introspection.Directive) (ret graphql.Marshaler) {
@@ -1850,6 +2064,36 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 
 // region    **************************** object.gotpl ****************************
 
+var paramFieldsImplementors = []string{"ParamFields"}
+
+func (ec *executionContext) _ParamFields(ctx context.Context, sel ast.SelectionSet, obj *logparams.ParamFields) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, paramFieldsImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ParamFields")
+		case "form":
+			out.Values[i] = ec._ParamFields_form(ctx, field, obj)
+		case "query":
+			out.Values[i] = ec._ParamFields_query(ctx, field, obj)
+		case "json":
+			out.Values[i] = ec._ParamFields_json(ctx, field, obj)
+		case "json_array":
+			out.Values[i] = ec._ParamFields_json_array(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var queryImplementors = []string{"Query"}
 
 func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -1969,11 +2213,13 @@ func (ec *executionContext) _RequestPayload(ctx context.Context, sel ast.Selecti
 			}
 		case "params":
 			out.Values[i] = ec._RequestPayload_params(ctx, field, obj)
+		case "headers":
+			out.Values[i] = ec._RequestPayload_headers(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "headers":
-			out.Values[i] = ec._RequestPayload_headers(ctx, field, obj)
+		case "param_fields":
+			out.Values[i] = ec._RequestPayload_param_fields(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -2282,6 +2528,10 @@ func (ec *executionContext) marshalNMapSlice2map(ctx context.Context, sel ast.Se
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNParamFields2githubᚗcomᚋaaronvbᚋlogparamsᚐParamFields(ctx context.Context, sel ast.SelectionSet, v logparams.ParamFields) graphql.Marshaler {
+	return ec._ParamFields(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNRequestFields2githubᚗcomᚋaaronvbᚋlogrequestᚐRequestFields(ctx context.Context, sel ast.SelectionSet, v logrequest.RequestFields) graphql.Marshaler {
@@ -2625,6 +2875,72 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 		return graphql.Null
 	}
 	return graphql.MarshalBoolean(*v)
+}
+
+func (ec *executionContext) unmarshalOMap2map(ctx context.Context, v interface{}) (map[string]interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalMap(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOMap2map(ctx context.Context, sel ast.SelectionSet, v map[string]interface{}) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return graphql.MarshalMap(v)
+}
+
+func (ec *executionContext) unmarshalOMap2ᚕmap(ctx context.Context, v interface{}) ([]map[string]interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []interface{}
+	if v != nil {
+		if tmp1, ok := v.([]interface{}); ok {
+			vSlice = tmp1
+		} else {
+			vSlice = []interface{}{v}
+		}
+	}
+	var err error
+	res := make([]map[string]interface{}, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalOMap2map(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOMap2ᚕmap(ctx context.Context, sel ast.SelectionSet, v []map[string]interface{}) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalOMap2map(ctx, sel, v[i])
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalOMapString2map(ctx context.Context, v interface{}) (map[string]string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := model.UnmarshalMapString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOMapString2map(ctx context.Context, sel ast.SelectionSet, v map[string]string) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return model.MarshalMapString(v)
 }
 
 func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {

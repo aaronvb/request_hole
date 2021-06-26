@@ -96,9 +96,10 @@ func (s *Http) logRequest(next http.Handler) http.Handler {
 		params := logparams.LogParams{Request: r, HidePrefix: true}
 
 		req := RequestPayload{
-			Fields:  fields,
-			Params:  params.ToString(),
-			Headers: r.Header,
+			Fields:      fields,
+			Params:      params.ToString(),
+			Headers:     r.Header,
+			ParamFields: params.ToFields(),
 		}
 
 		for _, rendererChannel := range s.rendererChannels {

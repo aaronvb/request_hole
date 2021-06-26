@@ -37,6 +37,7 @@ omit_slice_element_pointers: true
 autobind:
   - "github.com/aaronvb/request_hole/pkg/protocol"
   - "github.com/aaronvb/logrequest"
+  - "github.com/aaronvb/logparams"
 
 # This section declares type mapping between the GraphQL and go type systems
 #
@@ -50,3 +51,6 @@ models:
   MapSlice:
     model:
       - github.com/aaronvb/request_hole/graph/model.MapSlice
+  MapString:
+    model:
+      - github.com/aaronvb/request_hole/graph/model.MapString
