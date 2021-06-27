@@ -36,7 +36,6 @@ function Params(props) {
       </div>
     )
   }
-
 }
 
 function QueryParams(props) {
@@ -89,13 +88,14 @@ function JsonParams(props) {
 }
 
 function Request(props) {
+  const time = new Date(props.fields.time).toLocaleString('en-US', {hour12: false}).replace(', ', ' - ')
   return(
     <div className="shadow bg-white rounded-md py-4 px-4 flex flex-wrap md:flex-nowrap mb-3 animate-fade-in-down">
       <div className="md:w-64 md:mb-0 mb-6 flex-shrink-0 flex flex-col">
         <span className="self-start inline-block py-1 px-2 rounded bg-indigo-50 text-indigo-500 text-s font-semibold tracking-widest">
           {props.fields.method}
         </span>
-        <span className="mt-1 text-gray-500 text-sm">3 minutes ago</span>
+        <span className="mt-1 text-gray-400 text-sm">{time}</span>
       </div>
       <div className="md:flex-grow">
         <div className="border-b-2 mb-3 border-gray-100">

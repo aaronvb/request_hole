@@ -32,7 +32,11 @@ function AllRequests() {
     <div>Failed to load.</div>
   );
 
-  return data.requests.map(({ fields, headers, param_fields }) => (
+  const sortedRequests = data.requests.slice().sort((a, b) =>
+    new Date(b.fields.time) - new Date(a.fields.time)
+  )
+
+  return sortedRequests.map(({ fields, headers, param_fields }) => (
     <Request fields={fields} headers={headers} param_fields={param_fields}/>
   ));
 }
