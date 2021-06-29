@@ -4,19 +4,17 @@ module.exports = {
   theme: {
     extend: {
       keyframes: {
-        'fade-in-down': {
+        'slide-right': {
           '0%': {
-            opacity: '0',
-            transform: 'translateY(-10px)'
+            transform: 'translateX(-10px)'
           },
           '100%': {
-            opacity: '1',
-            transform: 'translateY(0)'
+            transform: 'translateX(0)'
           },
         }
       },
       animation: {
-        'fade-in-down': 'fade-in-down 0.5s ease-out'
+        'slide-right': 'slide-right 0.5s ease-out'
       }
     },
   },
