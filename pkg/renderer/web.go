@@ -23,6 +23,7 @@ type Web struct {
 	RequestAddr   string
 	RequestPort   int
 	StaticFiles   http.FileSystem
+	mu            sync.Mutex
 	requests      []*protocol.RequestPayload
 }
 
@@ -88,7 +89,9 @@ func (web *Web) requestsHandler(w http.ResponseWriter, r *http.Request) {
 // from the protocol server. This will add it to the request slice which our web ui
 // will serve as JSON and be consumed on the front end.
 func (web *Web) incomingRequest(req protocol.RequestPayload) {
-	web.requests = append(web.requests, req)
+	web.mu.Lock()
+	web.requests = append(web.requests, &req)
+	web.mu.Unlock()
 }
 
 // httpErrorLog implements the logger interface.
