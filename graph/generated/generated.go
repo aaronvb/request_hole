@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"io"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -39,13 +40,19 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	Mutation() MutationResolver
 	Query() QueryResolver
+	Subscription() SubscriptionResolver
 }
 
 type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	Mutation struct {
+		ClearRequests func(childComplexity int) int
+	}
+
 	ParamFields struct {
 		Form      func(childComplexity int) int
 		Json      func(childComplexity int) int
@@ -54,7 +61,8 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Requests func(childComplexity int) int
+		Requests   func(childComplexity int) int
+		ServerInfo func(childComplexity int) int
 	}
 
 	RequestFields struct {
@@ -68,15 +76,35 @@ type ComplexityRoot struct {
 	}
 
 	RequestPayload struct {
+		CreatedAt   func(childComplexity int) int
 		Fields      func(childComplexity int) int
 		Headers     func(childComplexity int) int
+		ID          func(childComplexity int) int
 		ParamFields func(childComplexity int) int
-		Params      func(childComplexity int) int
+	}
+
+	ServerInfo struct {
+		BuildInfo      func(childComplexity int) int
+		RequestAddress func(childComplexity int) int
+		RequestPort    func(childComplexity int) int
+		ResponseCode   func(childComplexity int) int
+		WebPort        func(childComplexity int) int
+	}
+
+	Subscription struct {
+		Request func(childComplexity int) int
 	}
 }
 
+type MutationResolver interface {
+	ClearRequests(ctx context.Context) (bool, error)
+}
 type QueryResolver interface {
-	Requests(ctx context.Context) ([]protocol.RequestPayload, error)
+	Requests(ctx context.Context) ([]*protocol.RequestPayload, error)
+	ServerInfo(ctx context.Context) (*model.ServerInfo, error)
+}
+type SubscriptionResolver interface {
+	Request(ctx context.Context) (<-chan *protocol.RequestPayload, error)
 }
 
 type executableSchema struct {
@@ -93,6 +121,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "Mutation.clearRequests":
+		if e.complexity.Mutation.ClearRequests == nil {
+			break
+		}
+
+		return e.complexity.Mutation.ClearRequests(childComplexity), true
 
 	case "ParamFields.form":
 		if e.complexity.ParamFields.Form == nil {
@@ -128,6 +163,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Requests(childComplexity), true
+
+	case "Query.serverInfo":
+		if e.complexity.Query.ServerInfo == nil {
+			break
+		}
+
+		return e.complexity.Query.ServerInfo(childComplexity), true
 
 	case "RequestFields.duration":
 		if e.complexity.RequestFields.Duration == nil {
@@ -178,6 +220,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.RequestFields.Url(childComplexity), true
 
+	case "RequestPayload.created_at":
+		if e.complexity.RequestPayload.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.RequestPayload.CreatedAt(childComplexity), true
+
 	case "RequestPayload.fields":
 		if e.complexity.RequestPayload.Fields == nil {
 			break
@@ -192,6 +241,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.RequestPayload.Headers(childComplexity), true
 
+	case "RequestPayload.id":
+		if e.complexity.RequestPayload.ID == nil {
+			break
+		}
+
+		return e.complexity.RequestPayload.ID(childComplexity), true
+
 	case "RequestPayload.param_fields":
 		if e.complexity.RequestPayload.ParamFields == nil {
 			break
@@ -199,12 +255,47 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.RequestPayload.ParamFields(childComplexity), true
 
-	case "RequestPayload.params":
-		if e.complexity.RequestPayload.Params == nil {
+	case "ServerInfo.build_info":
+		if e.complexity.ServerInfo.BuildInfo == nil {
 			break
 		}
 
-		return e.complexity.RequestPayload.Params(childComplexity), true
+		return e.complexity.ServerInfo.BuildInfo(childComplexity), true
+
+	case "ServerInfo.request_address":
+		if e.complexity.ServerInfo.RequestAddress == nil {
+			break
+		}
+
+		return e.complexity.ServerInfo.RequestAddress(childComplexity), true
+
+	case "ServerInfo.request_port":
+		if e.complexity.ServerInfo.RequestPort == nil {
+			break
+		}
+
+		return e.complexity.ServerInfo.RequestPort(childComplexity), true
+
+	case "ServerInfo.response_code":
+		if e.complexity.ServerInfo.ResponseCode == nil {
+			break
+		}
+
+		return e.complexity.ServerInfo.ResponseCode(childComplexity), true
+
+	case "ServerInfo.web_port":
+		if e.complexity.ServerInfo.WebPort == nil {
+			break
+		}
+
+		return e.complexity.ServerInfo.WebPort(childComplexity), true
+
+	case "Subscription.request":
+		if e.complexity.Subscription.Request == nil {
+			break
+		}
+
+		return e.complexity.Subscription.Request(childComplexity), true
 
 	}
 	return 0, false
@@ -224,6 +315,37 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 			first = false
 			data := ec._Query(ctx, rc.Operation.SelectionSet)
 			var buf bytes.Buffer
+			data.MarshalGQL(&buf)
+
+			return &graphql.Response{
+				Data: buf.Bytes(),
+			}
+		}
+	case ast.Mutation:
+		return func(ctx context.Context) *graphql.Response {
+			if !first {
+				return nil
+			}
+			first = false
+			data := ec._Mutation(ctx, rc.Operation.SelectionSet)
+			var buf bytes.Buffer
+			data.MarshalGQL(&buf)
+
+			return &graphql.Response{
+				Data: buf.Bytes(),
+			}
+		}
+	case ast.Subscription:
+		next := ec._Subscription(ctx, rc.Operation.SelectionSet)
+
+		var buf bytes.Buffer
+		return func(ctx context.Context) *graphql.Response {
+			buf.Reset()
+			data := next()
+
+			if data == nil {
+				return nil
+			}
 			data.MarshalGQL(&buf)
 
 			return &graphql.Response{
@@ -278,14 +400,32 @@ type ParamFields {
 }
 
 type RequestPayload {
+	id: String!
   fields: RequestFields!
-  params: String
   headers: MapSlice!
 	param_fields: ParamFields!
+	created_at: Time!
+}
+
+type ServerInfo {
+	request_address: String!
+	request_port: Int!
+	web_port: Int!
+	response_code: Int!
+	build_info: MapString
 }
 
 type Query {
   requests: [RequestPayload!]!
+	serverInfo: ServerInfo
+}
+
+type Subscription {
+  request: RequestPayload!
+}
+
+type Mutation {
+	clearRequests: Boolean!
 }
 
 scalar Time
@@ -352,6 +492,41 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _Mutation_clearRequests(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().ClearRequests(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
 
 func (ec *executionContext) _ParamFields_form(ctx context.Context, field graphql.CollectedField, obj *logparams.ParamFields) (ret graphql.Marshaler) {
 	defer func() {
@@ -511,9 +686,41 @@ func (ec *executionContext) _Query_requests(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]protocol.RequestPayload)
+	res := resTmp.([]*protocol.RequestPayload)
 	fc.Result = res
-	return ec.marshalNRequestPayload2ᚕgithubᚗcomᚋaaronvbᚋrequest_holeᚋpkgᚋprotocolᚐRequestPayloadᚄ(ctx, field.Selections, res)
+	return ec.marshalNRequestPayload2ᚕᚖgithubᚗcomᚋaaronvbᚋrequest_holeᚋpkgᚋprotocolᚐRequestPayloadᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_serverInfo(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().ServerInfo(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.ServerInfo)
+	fc.Result = res
+	return ec.marshalOServerInfo2ᚖgithubᚗcomᚋaaronvbᚋrequest_holeᚋgraphᚋmodelᚐServerInfo(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -832,6 +1039,41 @@ func (ec *executionContext) _RequestFields_status_code(ctx context.Context, fiel
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _RequestPayload_id(ctx context.Context, field graphql.CollectedField, obj *protocol.RequestPayload) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "RequestPayload",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _RequestPayload_fields(ctx context.Context, field graphql.CollectedField, obj *protocol.RequestPayload) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -865,38 +1107,6 @@ func (ec *executionContext) _RequestPayload_fields(ctx context.Context, field gr
 	res := resTmp.(logrequest.RequestFields)
 	fc.Result = res
 	return ec.marshalNRequestFields2githubᚗcomᚋaaronvbᚋlogrequestᚐRequestFields(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _RequestPayload_params(ctx context.Context, field graphql.CollectedField, obj *protocol.RequestPayload) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "RequestPayload",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Params, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _RequestPayload_headers(ctx context.Context, field graphql.CollectedField, obj *protocol.RequestPayload) (ret graphql.Marshaler) {
@@ -967,6 +1177,258 @@ func (ec *executionContext) _RequestPayload_param_fields(ctx context.Context, fi
 	res := resTmp.(logparams.ParamFields)
 	fc.Result = res
 	return ec.marshalNParamFields2githubᚗcomᚋaaronvbᚋlogparamsᚐParamFields(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _RequestPayload_created_at(ctx context.Context, field graphql.CollectedField, obj *protocol.RequestPayload) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "RequestPayload",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ServerInfo_request_address(ctx context.Context, field graphql.CollectedField, obj *model.ServerInfo) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ServerInfo",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RequestAddress, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ServerInfo_request_port(ctx context.Context, field graphql.CollectedField, obj *model.ServerInfo) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ServerInfo",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RequestPort, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ServerInfo_web_port(ctx context.Context, field graphql.CollectedField, obj *model.ServerInfo) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ServerInfo",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.WebPort, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ServerInfo_response_code(ctx context.Context, field graphql.CollectedField, obj *model.ServerInfo) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ServerInfo",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ResponseCode, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ServerInfo_build_info(ctx context.Context, field graphql.CollectedField, obj *model.ServerInfo) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ServerInfo",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.BuildInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(map[string]string)
+	fc.Result = res
+	return ec.marshalOMapString2map(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Subscription_request(ctx context.Context, field graphql.CollectedField) (ret func() graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = nil
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Subscription",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Subscription().Request(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return nil
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return nil
+	}
+	return func() graphql.Marshaler {
+		res, ok := <-resTmp.(<-chan *protocol.RequestPayload)
+		if !ok {
+			return nil
+		}
+		return graphql.WriterFunc(func(w io.Writer) {
+			w.Write([]byte{'{'})
+			graphql.MarshalString(field.Alias).MarshalGQL(w)
+			w.Write([]byte{':'})
+			ec.marshalNRequestPayload2ᚖgithubᚗcomᚋaaronvbᚋrequest_holeᚋpkgᚋprotocolᚐRequestPayload(ctx, field.Selections, res).MarshalGQL(w)
+			w.Write([]byte{'}'})
+		})
+	}
 }
 
 func (ec *executionContext) ___Directive_name(ctx context.Context, field graphql.CollectedField, obj *introspection.Directive) (ret graphql.Marshaler) {
@@ -2064,6 +2526,37 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 
 // region    **************************** object.gotpl ****************************
 
+var mutationImplementors = []string{"Mutation"}
+
+func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, mutationImplementors)
+
+	ctx = graphql.WithFieldContext(ctx, &graphql.FieldContext{
+		Object: "Mutation",
+	})
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Mutation")
+		case "clearRequests":
+			out.Values[i] = ec._Mutation_clearRequests(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var paramFieldsImplementors = []string{"ParamFields"}
 
 func (ec *executionContext) _ParamFields(ctx context.Context, sel ast.SelectionSet, obj *logparams.ParamFields) graphql.Marshaler {
@@ -2121,6 +2614,17 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
+				return res
+			})
+		case "serverInfo":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_serverInfo(ctx, field)
 				return res
 			})
 		case "__type":
@@ -2206,13 +2710,16 @@ func (ec *executionContext) _RequestPayload(ctx context.Context, sel ast.Selecti
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("RequestPayload")
+		case "id":
+			out.Values[i] = ec._RequestPayload_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "fields":
 			out.Values[i] = ec._RequestPayload_fields(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "params":
-			out.Values[i] = ec._RequestPayload_params(ctx, field, obj)
 		case "headers":
 			out.Values[i] = ec._RequestPayload_headers(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -2220,6 +2727,11 @@ func (ec *executionContext) _RequestPayload(ctx context.Context, sel ast.Selecti
 			}
 		case "param_fields":
 			out.Values[i] = ec._RequestPayload_param_fields(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "created_at":
+			out.Values[i] = ec._RequestPayload_created_at(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -2232,6 +2744,70 @@ func (ec *executionContext) _RequestPayload(ctx context.Context, sel ast.Selecti
 		return graphql.Null
 	}
 	return out
+}
+
+var serverInfoImplementors = []string{"ServerInfo"}
+
+func (ec *executionContext) _ServerInfo(ctx context.Context, sel ast.SelectionSet, obj *model.ServerInfo) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, serverInfoImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ServerInfo")
+		case "request_address":
+			out.Values[i] = ec._ServerInfo_request_address(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "request_port":
+			out.Values[i] = ec._ServerInfo_request_port(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "web_port":
+			out.Values[i] = ec._ServerInfo_web_port(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "response_code":
+			out.Values[i] = ec._ServerInfo_response_code(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "build_info":
+			out.Values[i] = ec._ServerInfo_build_info(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var subscriptionImplementors = []string{"Subscription"}
+
+func (ec *executionContext) _Subscription(ctx context.Context, sel ast.SelectionSet) func() graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, subscriptionImplementors)
+	ctx = graphql.WithFieldContext(ctx, &graphql.FieldContext{
+		Object: "Subscription",
+	})
+	if len(fields) != 1 {
+		ec.Errorf(ctx, "must subscribe to exactly one stream")
+		return nil
+	}
+
+	switch fields[0].Name {
+	case "request":
+		return ec._Subscription_request(ctx, fields[0])
+	default:
+		panic("unknown field " + strconv.Quote(fields[0].Name))
+	}
 }
 
 var __DirectiveImplementors = []string{"__Directive"}
@@ -2542,7 +3118,7 @@ func (ec *executionContext) marshalNRequestPayload2githubᚗcomᚋaaronvbᚋrequ
 	return ec._RequestPayload(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNRequestPayload2ᚕgithubᚗcomᚋaaronvbᚋrequest_holeᚋpkgᚋprotocolᚐRequestPayloadᚄ(ctx context.Context, sel ast.SelectionSet, v []protocol.RequestPayload) graphql.Marshaler {
+func (ec *executionContext) marshalNRequestPayload2ᚕᚖgithubᚗcomᚋaaronvbᚋrequest_holeᚋpkgᚋprotocolᚐRequestPayloadᚄ(ctx context.Context, sel ast.SelectionSet, v []*protocol.RequestPayload) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -2566,7 +3142,7 @@ func (ec *executionContext) marshalNRequestPayload2ᚕgithubᚗcomᚋaaronvbᚋr
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNRequestPayload2githubᚗcomᚋaaronvbᚋrequest_holeᚋpkgᚋprotocolᚐRequestPayload(ctx, sel, v[i])
+			ret[i] = ec.marshalNRequestPayload2ᚖgithubᚗcomᚋaaronvbᚋrequest_holeᚋpkgᚋprotocolᚐRequestPayload(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -2577,6 +3153,16 @@ func (ec *executionContext) marshalNRequestPayload2ᚕgithubᚗcomᚋaaronvbᚋr
 	}
 	wg.Wait()
 	return ret
+}
+
+func (ec *executionContext) marshalNRequestPayload2ᚖgithubᚗcomᚋaaronvbᚋrequest_holeᚋpkgᚋprotocolᚐRequestPayload(ctx context.Context, sel ast.SelectionSet, v *protocol.RequestPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._RequestPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
@@ -2941,6 +3527,13 @@ func (ec *executionContext) marshalOMapString2map(ctx context.Context, sel ast.S
 		return graphql.Null
 	}
 	return model.MarshalMapString(v)
+}
+
+func (ec *executionContext) marshalOServerInfo2ᚖgithubᚗcomᚋaaronvbᚋrequest_holeᚋgraphᚋmodelᚐServerInfo(ctx context.Context, sel ast.SelectionSet, v *model.ServerInfo) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._ServerInfo(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {
