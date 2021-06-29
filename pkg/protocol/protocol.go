@@ -1,6 +1,8 @@
 package protocol
 
 import (
+	"time"
+
 	"github.com/aaronvb/logparams"
 	"github.com/aaronvb/logrequest"
 )
@@ -16,8 +18,10 @@ type Protocol interface {
 // RequestPayload is the request payload we receive from an incoming request that we use with
 // the renderers.
 type RequestPayload struct {
+	ID          string                   `json:"id"`
 	Fields      logrequest.RequestFields `json:"fields"`
 	Headers     map[string][]string      `json:"headers"`
 	Params      string                   `json:"params"`
 	ParamFields logparams.ParamFields    `json:"paramFields"`
+	CreatedAt   time.Time                `json:"createdAt"`
 }

@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/aaronvb/logparams"
 	"github.com/aaronvb/logrequest"
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/pterm/pterm"
 )
@@ -96,10 +98,12 @@ func (s *Http) logRequest(next http.Handler) http.Handler {
 		params := logparams.LogParams{Request: r, HidePrefix: true}
 
 		req := RequestPayload{
+			ID:          uuid.New().String(),
 			Fields:      fields,
 			Params:      params.ToString(),
 			Headers:     r.Header,
 			ParamFields: params.ToFields(),
+			CreatedAt:   time.Now(),
 		}
 
 		for _, rendererChannel := range s.rendererChannels {
