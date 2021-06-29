@@ -17,9 +17,13 @@ import (
 )
 
 type Web struct {
-	Port        int
-	requests    []protocol.RequestPayload
-	StaticFiles http.FileSystem
+	BuildInfo     map[string]string
+	Port          int
+	ResponseCode  int
+	RequestAddr   string
+	RequestPort   int
+	StaticFiles   http.FileSystem
+	requests      []*protocol.RequestPayload
 }
 
 func (web *Web) Start(wg *sync.WaitGroup, rp chan protocol.RequestPayload, q chan int, e chan int) {
