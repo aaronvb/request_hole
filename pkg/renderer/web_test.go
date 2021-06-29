@@ -40,7 +40,7 @@ func TestRequestHandler(t *testing.T) {
 		{protocol.RequestPayload{Params: "{\"foo\" => \"bar\"}"}},
 	}
 
-	webServer := Web{requests: make([]protocol.RequestPayload, 0)}
+	webServer := Web{requests: make([]*protocol.RequestPayload, 0)}
 	srv := httptest.NewServer(webServer.routes())
 
 	defer srv.Close()
