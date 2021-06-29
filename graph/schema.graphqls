@@ -20,14 +20,32 @@ type ParamFields {
 }
 
 type RequestPayload {
+	id: String!
   fields: RequestFields!
-  params: String
   headers: MapSlice!
 	param_fields: ParamFields!
+	created_at: Time!
+}
+
+type ServerInfo {
+	request_address: String!
+	request_port: Int!
+	web_port: Int!
+	response_code: Int!
+	build_info: MapString
 }
 
 type Query {
   requests: [RequestPayload!]!
+	serverInfo: ServerInfo
+}
+
+type Subscription {
+  request: RequestPayload!
+}
+
+type Mutation {
+	clearRequests: Boolean!
 }
 
 scalar Time
