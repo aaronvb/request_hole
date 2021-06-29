@@ -1,8 +1,36 @@
+import React, { useEffect, useState } from 'react';
 import RequestHeaders from './RequestHeaders';
 import RequestParams from './RequestParams';
 
+function Details(props) {
+  const iconDown = (
+    <svg xmlns="http://www.w3.org/2000/svg" className="cursor-pointer h-8 w-8 hover:text-black" viewBox="0 0 20 20" fill="currentColor">
+      <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+    </svg>
+  )
+
+  const iconUp = (
+    <svg xmlns="http://www.w3.org/2000/svg" className="cursor-pointer h-8 w-8 hover:text-black" viewBox="0 0 20 20" fill="currentColor">
+      <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" />
+    </svg>
+  )
+  return(
+    <div onClick={props.toggleDetails} className="flex ml-auto text-gray-500">
+      {props.showDetails ? iconDown : iconUp}
+    </div>
+  );
+}
+
 function Request(props) {
-  const time = formatTimeAgo(new Date(props.created_at))
+  const time = formatTimeAgo(new Date(props.created_at));
+  const [showDetails, setShowDetails] = useState(props.showAllDetails);
+
+  useEffect(() => {
+    if (showDetails != props.showAllDetails) {
+      setShowDetails(props.showAllDetails)
+    }
+  }, [props.showAllDetails]) // Update this component show details if the parent show ALL details changes
+
   return(
     <div className="shadow bg-white rounded-md py-4 px-4 flex flex-wrap md:flex-nowrap mb-3 animate-slide-right">
       <div className="md:w-56 md:mb-0 mb-6 flex-shrink-0 flex flex-col">
@@ -17,12 +45,9 @@ function Request(props) {
             <h2 className="tracking-midwest text-xs text-gray-400">URL</h2>
             <h2 className="font-medium text-gray-800 title-font mb-5 text-xl">{props.fields.url}</h2>
           </div>
-          <div className="flex ml-auto text-gray-500">
-            <svg xmlns="http://www.w3.org/2000/svg" className="cursor-pointer h-8 w-8 hover:text-black" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-            </svg>
-          </div>
+          <Details id={props.id} showDetails={showDetails} toggleDetails={() => setShowDetails(!showDetails)}/>
         </div>
+        {showDetails ?
         <section className="text-gray-600 body-font border-t-2 pt-3 border-gray-100">
           <div className="container py-2 mx-auto">
             <div className="flex flex-wrap -m-4">
@@ -31,6 +56,7 @@ function Request(props) {
             </div>
           </div>
         </section>
+        : <div></div>}
       </div>
     </div>
   )
