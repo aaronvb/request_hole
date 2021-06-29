@@ -6,14 +6,20 @@ import (
 	"log"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/handler/extension"
+	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/aaronvb/request_hole/graph"
 	"github.com/aaronvb/request_hole/graph/generated"
+	"github.com/aaronvb/request_hole/graph/model"
 	"github.com/aaronvb/request_hole/pkg/protocol"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
 	"github.com/pterm/pterm"
+	"github.com/rs/cors"
 )
 
 type Web struct {
@@ -25,20 +31,23 @@ type Web struct {
 	StaticFiles   http.FileSystem
 	mu            sync.Mutex
 	requests      []*protocol.RequestPayload
+	subscriptions map[string]chan *protocol.RequestPayload
 }
 
 func (web *Web) Start(wg *sync.WaitGroup, rp chan protocol.RequestPayload, q chan int, e chan int) {
 	// Initialize requests as an empty slice so that we can return a proper json empty array
 	// if no values have been appended.
-	web.requests = make([]protocol.RequestPayload, 0)
+	web.requests = make([]*protocol.RequestPayload, 0)
+	web.subscriptions = make(map[string]chan *protocol.RequestPayload)
 
 	addr := fmt.Sprintf("localhost:%d", web.Port)
 	errorLog := log.New(&httpErrorLog{}, "", 0)
 
 	srv := &http.Server{
-		Addr:     addr,
-		ErrorLog: errorLog,
-		Handler:  web.routes(),
+		Addr:        addr,
+		ErrorLog:    errorLog,
+		Handler:     web.routes(),
+		IdleTimeout: 30 * time.Second,
 	}
 
 	defer wg.Done()
@@ -66,23 +75,46 @@ func (web *Web) routes() http.Handler {
 	r := mux.NewRouter()
 	r.HandleFunc("/requests", web.requestsHandler).Methods("GET")
 	r.Handle("/graphql", playground.Handler("GraphQL playground", "/query"))
-
-	// Pass pointer to requests
-	gqlSrv := handler.NewDefaultServer(
-		generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{
-			RequestPayloads: &web.requests,
-		}}))
-
-	r.Handle("/query", gqlSrv)
+	r.HandleFunc("/query", web.gqlHandler)
+	handler := cors.Default().Handler(r)
 
 	r.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer((web.StaticFiles))))
-	return r
+	return handler
 }
 
 // requestsHandler returns an array of incoming requests to our protocol server.
 func (web *Web) requestsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(web.requests)
+}
+
+func (web *Web) gqlHandler(w http.ResponseWriter, r *http.Request) {
+	serverInfo := model.ServerInfo{
+		RequestAddress: web.RequestAddr,
+		RequestPort:    web.RequestPort,
+		WebPort:        web.Port,
+		ResponseCode:   web.ResponseCode,
+		BuildInfo:      web.BuildInfo,
+	}
+	// Pass pointer to requests and subscriptions
+	gqlSrv := handler.New(
+		generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{
+			RequestPayloads:        &web.requests,
+			RequestPayloadObserver: &web.subscriptions,
+			Info:                   &serverInfo,
+		}}))
+	gqlSrv.AddTransport(transport.POST{})
+	gqlSrv.AddTransport(&transport.Websocket{
+		KeepAlivePingInterval: 25 * time.Second,
+		Upgrader: websocket.Upgrader{
+			CheckOrigin: func(r *http.Request) bool {
+				return true
+			},
+		},
+	})
+	gqlSrv.Use(extension.Introspection{})
+
+	gqlSrv.ServeHTTP(w, r)
 }
 
 // incomingRequest is called when we receive a RequestPayload over the channel
@@ -92,6 +124,10 @@ func (web *Web) incomingRequest(req protocol.RequestPayload) {
 	web.mu.Lock()
 	web.requests = append(web.requests, &req)
 	web.mu.Unlock()
+
+	for _, subscriptions := range web.subscriptions {
+		subscriptions <- &req
+	}
 }
 
 // httpErrorLog implements the logger interface.
