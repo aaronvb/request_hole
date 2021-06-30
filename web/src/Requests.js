@@ -52,6 +52,10 @@ const CLEAR_REQUESTS = gql`
   }
 `;
 
+function filterRequests(requests, filter = "All") {
+  return requests.filter(request => !(filter !== "ALL" && filter !== request.fields.method))
+}
+
 function AllRequests(props) {
   if (props.loading) return (
     <div>Loading requests...</div>
@@ -65,21 +69,17 @@ function AllRequests(props) {
     new Date(b.created_at) - new Date(a.created_at)
   );
 
-  return sortedRequests.map(({id, fields, headers, param_fields, created_at}) => {
-    if (props.selectedFilter != "ALL" && props.selectedFilter != fields.method) { return false; }
-
-    return(
-      <Request
-        key={id}
-        created_at={created_at}
-        fields={fields}
-        headers={headers}
-        param_fields={param_fields}
-        id={id}
-        showAllDetails={props.showAllDetails}
-      />
-    )
-  });
+  return filterRequests(sortedRequests, props.selectedFilter).map(({id, fields, headers, param_fields, created_at}) => (
+    <Request
+      key={id}
+      created_at={created_at}
+      fields={fields}
+      headers={headers}
+      param_fields={param_fields}
+      id={id}
+      showAllDetails={props.showAllDetails}
+    />
+  ));
 }
 
 function ToggleDetails(props) {
@@ -177,7 +177,7 @@ function Requests() {
           <div className="lg:w-1/2 w-full mb-6 lg:mb-0">
             <div className="flex flex-col sm:flex-row sm:items-center items-start mx-auto">
               <h1 className="sm:text-2xl text-xl font-medium title-font mb-2 text-gray-900">
-                {pluralize(requests.length, "Request")}
+                {pluralize(filterRequests(requests, selectedFilter).length, "Request")}
               </h1>
             </div>
             <div className="h-1 w-1/6 bg-indigo-500 rounded mb-4"></div>
@@ -190,7 +190,7 @@ function Requests() {
                 </svg>
                 Filter: {selectedFilter}
               </button>
-              <ul class="absolute hidden right-0 w-max text-white pt-1 group-hover:block">
+              <ul class="absolute hidden right-0 w-max text-white pt-1 group-hover:block z-10">
                 <li onClick={() => setSelectedFilter("ALL")}>
                   <button class="rounded-t bg-indigo-500 hover:bg-indigo-900 py-2 px-4 block w-full text-left whitespace-no-wrap">
                     ALL

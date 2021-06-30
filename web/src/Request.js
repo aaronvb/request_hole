@@ -26,9 +26,7 @@ function Request(props) {
   const [showDetails, setShowDetails] = useState(props.showAllDetails);
 
   useEffect(() => {
-    if (showDetails != props.showAllDetails) {
-      setShowDetails(props.showAllDetails)
-    }
+    setShowDetails(props.showAllDetails)
   }, [props.showAllDetails]) // Update this component show details if the parent show ALL details changes
 
   return(
