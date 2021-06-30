@@ -105,7 +105,7 @@ func (web *Web) gqlHandler(w http.ResponseWriter, r *http.Request) {
 		}}))
 	gqlSrv.AddTransport(transport.POST{})
 	gqlSrv.AddTransport(&transport.Websocket{
-		KeepAlivePingInterval: 25 * time.Second,
+		KeepAlivePingInterval: 5 * time.Second,
 		Upgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
 				return true
