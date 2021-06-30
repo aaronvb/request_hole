@@ -65,17 +65,21 @@ function AllRequests(props) {
     new Date(b.created_at) - new Date(a.created_at)
   );
 
-  return sortedRequests.map(({id, fields, headers, param_fields, created_at}) => (
-    <Request
-      key={id}
-      created_at={created_at}
-      fields={fields}
-      headers={headers}
-      param_fields={param_fields}
-      id={id}
-      showAllDetails={props.showAllDetails}
-    />
-  ));
+  return sortedRequests.map(({id, fields, headers, param_fields, created_at}) => {
+    if (props.selectedFilter != "ALL" && props.selectedFilter != fields.method) { return false; }
+
+    return(
+      <Request
+        key={id}
+        created_at={created_at}
+        fields={fields}
+        headers={headers}
+        param_fields={param_fields}
+        id={id}
+        showAllDetails={props.showAllDetails}
+      />
+    )
+  });
 }
 
 function ToggleDetails(props) {
@@ -100,6 +104,16 @@ function ToggleDetails(props) {
   )
 }
 
+function Filters(props) {
+  return props.filters.map((filter, i) => (
+    <li onClick={() => props.setSelectedFilter(filter)}>
+      <button class={`${i === (props.filters.length - 1) ? "rounded-b" : ""} bg-indigo-500 hover:bg-indigo-900 py-2 px-4 block w-full text-left whitespace-no-wrap`}>
+        {filter}
+      </button>
+    </li>
+  ));
+}
+
 function Requests() {
   const {loading, error, data, subscribeToMore} = useQuery(ALL_REQUESTS);
   const [clearRequests] = useMutation(CLEAR_REQUESTS, {
@@ -117,6 +131,24 @@ function Requests() {
   const [requests, setRequests] = useState([]);
   const [subscribed, setSubscribed] = useState(false);
   const [showAllDetails, setShowAllDetails] = useState(true);
+  const [selectedFilter, setSelectedFilter] = useState("ALL");
+  const filters = [
+    "GET",
+    "POST",
+    "PUT",
+    "PATCH",
+    "DELETE",
+    "COPY",
+    "HEAD",
+    "OPTIONS",
+    "LINK",
+    "UNLINK",
+    "PURGE",
+    "LOCK",
+    "UNLOCK",
+    "PROPFIND",
+    "VIEW",
+  ]
 
   useEffect(() => {
     if (data) {
@@ -145,17 +177,27 @@ function Requests() {
           <div className="lg:w-1/2 w-full mb-6 lg:mb-0">
             <div className="flex flex-col sm:flex-row sm:items-center items-start mx-auto">
               <h1 className="sm:text-2xl text-xl font-medium title-font mb-2 text-gray-900">
-                {maybePluralize(requests.length, "Request")}
+                {pluralize(requests.length, "Request")}
               </h1>
             </div>
             <div className="h-1 w-1/6 bg-indigo-500 rounded mb-4"></div>
           </div>
           <div className="flex items-center lg:w-1/2 w-full mb-5 flex-row-reverse">
-            <div className="ml-1 items-center cursor-pointer inline-flex bg-indigo-500 border-0 py-1 px-3 focus:outline-none hover:bg-indigo-900 rounded text-white">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-            </svg>
-              Filter
+            <div className="group inline-block relative">
+              <button className="ml-1 items-center cursor-pointer inline-flex bg-indigo-500 border-0 py-1 px-3 focus:outline-none hover:bg-indigo-900 rounded text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                </svg>
+                Filter: {selectedFilter}
+              </button>
+              <ul class="absolute hidden right-0 w-max text-white pt-1 group-hover:block">
+                <li onClick={() => setSelectedFilter("ALL")}>
+                  <button class="rounded-t bg-indigo-500 hover:bg-indigo-900 py-2 px-4 block w-full text-left whitespace-no-wrap">
+                    ALL
+                  </button>
+                </li>
+                <Filters filters={filters} setSelectedFilter={setSelectedFilter} />
+              </ul>
             </div>
             <ToggleDetails showAllDetails={showAllDetails} toggle={() => setShowAllDetails(!showAllDetails)}/>
             <div onClick={() => {if (window.confirm('Are you sure you want to clear all requests?')) clearRequests()}} className="cursor-pointer items-center inline-flex bg-indigo-500 border-0 py-1 px-3 focus:outline-none hover:bg-indigo-900 rounded text-white">
@@ -166,13 +208,13 @@ function Requests() {
             </div>
           </div>
         </div>
-        <AllRequests error={error} loading={loading} requests={requests} showAllDetails={showAllDetails} />
+        <AllRequests selectedFilter={selectedFilter} error={error} loading={loading} requests={requests} showAllDetails={showAllDetails} />
       </div>
     </section>
   )
 }
 
-const maybePluralize = (count, noun, suffix = 's') =>
+const pluralize = (count, noun, suffix = 's') =>
   `${count} ${noun}${count !== 1 ? suffix : ''}`;
 
 export default Requests;
