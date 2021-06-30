@@ -106,8 +106,8 @@ function ToggleDetails(props) {
 
 function Filters(props) {
   return props.filters.map((filter, i) => (
-    <li onClick={() => props.setSelectedFilter(filter)}>
-      <button class={`${i === (props.filters.length - 1) ? "rounded-b" : ""} bg-indigo-500 hover:bg-indigo-900 py-2 px-4 block w-full text-left whitespace-no-wrap`}>
+    <li key={i} onClick={() => props.setSelectedFilter(filter)}>
+      <button className={`${i === (props.filters.length - 1) ? "rounded-b" : ""} bg-indigo-500 hover:bg-indigo-900 py-2 px-4 block w-full text-left whitespace-no-wrap`}>
         {filter}
       </button>
     </li>
@@ -190,9 +190,9 @@ function Requests() {
                 </svg>
                 Filter: {selectedFilter}
               </button>
-              <ul class="absolute hidden right-0 w-max text-white pt-1 group-hover:block z-10">
+              <ul className="absolute hidden right-0 w-max text-white pt-1 group-hover:block z-10">
                 <li onClick={() => setSelectedFilter("ALL")}>
-                  <button class="rounded-t bg-indigo-500 hover:bg-indigo-900 py-2 px-4 block w-full text-left whitespace-no-wrap">
+                  <button className="rounded-t bg-indigo-500 hover:bg-indigo-900 py-2 px-4 block w-full text-left whitespace-no-wrap">
                     ALL
                   </button>
                 </li>
