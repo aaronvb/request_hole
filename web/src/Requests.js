@@ -107,16 +107,16 @@ function ToggleDetails(props) {
 function Filters(props) {
   return props.filters.map((filter, i) => (
     <li key={i} onClick={() => props.setSelectedFilter(filter)}>
-      <button className={`${i === (props.filters.length - 1) ? "rounded-b" : ""} bg-indigo-500 hover:bg-indigo-900 py-2 px-4 block w-full text-left whitespace-no-wrap`}>
+      <button className={`${i === (props.filters.length - 1) ? "rounded-b" : ""} focus:outline-none bg-indigo-500 hover:bg-indigo-900 py-2 px-4 block w-full text-left whitespace-no-wrap`}>
         {filter}
       </button>
     </li>
   ));
 }
 
-function Requests() {
-  const {loading, error, data, subscribeToMore} = useQuery(ALL_REQUESTS);
-  const [clearRequests] = useMutation(CLEAR_REQUESTS, {
+function Requests(props) {
+  const { loading, error, data, subscribeToMore } = useQuery(ALL_REQUESTS);
+  const [ clearRequests ] = useMutation(CLEAR_REQUESTS, {
     update(cache) {
       cache.modify({
         fields: {
@@ -128,27 +128,10 @@ function Requests() {
     }
   });
 
-  const [requests, setRequests] = useState([]);
-  const [subscribed, setSubscribed] = useState(false);
-  const [showAllDetails, setShowAllDetails] = useState(true);
-  const [selectedFilter, setSelectedFilter] = useState("ALL");
-  const filters = [
-    "GET",
-    "POST",
-    "PUT",
-    "PATCH",
-    "DELETE",
-    "COPY",
-    "HEAD",
-    "OPTIONS",
-    "LINK",
-    "UNLINK",
-    "PURGE",
-    "LOCK",
-    "UNLOCK",
-    "PROPFIND",
-    "VIEW",
-  ]
+  const [ requests, setRequests ] = useState([]);
+  const [ subscribed, setSubscribed ] = useState(false);
+  const [ showAllDetails, setShowAllDetails ] = useState(true);
+  const [ selectedFilter, setSelectedFilter ] = useState("ALL");
 
   useEffect(() => {
     if (data) {
@@ -192,11 +175,11 @@ function Requests() {
               </button>
               <ul className="absolute hidden right-0 w-max text-white pt-1 group-hover:block z-10">
                 <li onClick={() => setSelectedFilter("ALL")}>
-                  <button className="rounded-t bg-indigo-500 hover:bg-indigo-900 py-2 px-4 block w-full text-left whitespace-no-wrap">
+                  <button className="focus:outline-none rounded-t bg-indigo-500 hover:bg-indigo-900 py-2 px-4 block w-full text-left whitespace-no-wrap">
                     ALL
                   </button>
                 </li>
-                <Filters filters={filters} setSelectedFilter={setSelectedFilter} />
+                <Filters filters={props.filters} setSelectedFilter={setSelectedFilter} />
               </ul>
             </div>
             <ToggleDetails showAllDetails={showAllDetails} toggle={() => setShowAllDetails(!showAllDetails)}/>
