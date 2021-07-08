@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/pterm/pterm"
+	"github.com/rs/cors"
 )
 
 // Http is the protocol for accepting http requests.
@@ -80,7 +81,9 @@ func (s *Http) routes() http.Handler {
 	r.PathPrefix("/").HandlerFunc(s.defaultHandler)
 	r.Use(s.logRequest)
 
-	return r
+	handler := cors.AllowAll().Handler(r)
+
+	return handler
 }
 
 // defaultHandler returns the response code which is provided as a flag.
