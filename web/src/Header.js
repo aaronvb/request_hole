@@ -1,4 +1,5 @@
 import { useQuery, gql } from "@apollo/client";
+import { useState, useEffect } from "react";
 
 export const SERVER_INFO = gql`
   query GetServerInfo {
@@ -31,14 +32,24 @@ function ServerInfo(props) {
           d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"
         />
       </svg>
-      Listening on: http://{props.data.serverInfo.request_address}:
-      {props.data.serverInfo.request_port}
+      Listening on: {props.url}
     </div>
   );
 }
 
 function Header(props) {
   const { loading, error, data } = useQuery(SERVER_INFO);
+  const [url, setUrl] = useState("");
+  const [version, setVersion] = useState("");
+
+  useEffect(() => {
+    if (data) {
+      setUrl(
+        `http://${data.serverInfo.request_address}:${data.serverInfo.request_port}`
+      );
+      setVersion(data.serverInfo.build_info["version"]);
+    }
+  }, [data]);
 
   return (
     <header className="text-gray-600 body-font border-b-2 bg-white">
@@ -49,11 +60,11 @@ function Header(props) {
         >
           <span className="text-xl">Request Hole</span>
           <h2 className="tracking-widest text-sm ml-2 title-font font-light text-gray-400">
-            {data ? data.serverInfo.build_info["version"] : ""}
+            {version}
           </h2>
         </a>
         <div className="md:mr-auto md:ml-4 md:py-1 md:pl-4 md:border-l md:border-gray-400	flex flex-wrap items-center text-base justify-center">
-          <ServerInfo loading={loading} error={error} data={data} />
+          <ServerInfo loading={loading} error={error} url={url} />
         </div>
         <nav className="md:ml-auto flex flex-wrap items-center text-base justify-center">
           <button
