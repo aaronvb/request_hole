@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"sync"
+	"time"
 
 	"github.com/aaronvb/logparams"
 	"github.com/aaronvb/logrequest"
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/pterm/pterm"
+	"github.com/rs/cors"
 )
 
 // Http is the protocol for accepting http requests.
@@ -26,7 +28,8 @@ type Http struct {
 
 	// rendererChannel is the channel which we send a RequestPayload to when
 	// receiving an incoming request to the Http protocol.
-	rendererChannels []chan RequestPayload
+	rendererChannels     []chan RequestPayload
+	rendererQuitChannels []chan int
 }
 
 // Start will start the HTTP server.
@@ -35,7 +38,7 @@ type Http struct {
 //
 // In the case that we cannot start this server, we send a signal to our quit channel
 // to close renderers.
-func (s *Http) Start(wg *sync.WaitGroup, c []chan RequestPayload, quits []chan int) {
+func (s *Http) Start(c []chan RequestPayload, quits []chan int, errors []chan int) {
 	addr := fmt.Sprintf("%s:%d", s.Addr, s.Port)
 	errorLog := log.New(&httpErrorLog{}, "", 0)
 
@@ -46,14 +49,28 @@ func (s *Http) Start(wg *sync.WaitGroup, c []chan RequestPayload, quits []chan i
 	}
 
 	s.rendererChannels = c
+	s.rendererQuitChannels = quits
 
-	defer wg.Done()
+	go func() {
+		err := srv.ListenAndServe()
+		str := pterm.Error.WithShowLineNumber(false).Sprintf("Http Protocol: %s\n", err)
+		pterm.Printo(str) // Overwrite last line
 
-	err := srv.ListenAndServe()
-	str := pterm.Error.WithShowLineNumber(false).Sprintf("%s\n", err)
-	pterm.Printo(str) // Overwrite last line
+		// If the server fails to start, send a quit to all renderers, which will exit
+		// the main program.
+		s.quitRenderers()
+	}()
 
-	for _, quit := range quits {
+	// If any of our renderers send an error signal, send a quit signal to all other
+	// renderers, which will exit the main program.
+	for range merge(errors) {
+		s.quitRenderers()
+		return
+	}
+}
+
+func (s *Http) quitRenderers() {
+	for _, quit := range s.rendererQuitChannels {
 		quit <- 1
 	}
 }
@@ -64,7 +81,9 @@ func (s *Http) routes() http.Handler {
 	r.PathPrefix("/").HandlerFunc(s.defaultHandler)
 	r.Use(s.logRequest)
 
-	return r
+	handler := cors.AllowAll().Handler(r)
+
+	return handler
 }
 
 // defaultHandler returns the response code which is provided as a flag.
@@ -82,9 +101,12 @@ func (s *Http) logRequest(next http.Handler) http.Handler {
 		params := logparams.LogParams{Request: r, HidePrefix: true}
 
 		req := RequestPayload{
-			Fields:  fields,
-			Params:  params.ToString(),
-			Headers: r.Header,
+			ID:          uuid.New().String(),
+			Fields:      fields,
+			Params:      params.ToString(),
+			Headers:     r.Header,
+			ParamFields: params.ToFields(),
+			CreatedAt:   time.Now(),
 		}
 
 		for _, rendererChannel := range s.rendererChannels {
@@ -101,4 +123,21 @@ type httpErrorLog struct{}
 func (e *httpErrorLog) Write(b []byte) (n int, err error) {
 	pterm.Error.WithShowLineNumber(false).Println(string(b))
 	return len(b), nil
+}
+
+// merge will fan-in the error channels so that we can range over it.
+func merge(cs []chan int) <-chan int {
+	out := make(chan int)
+
+	output := func(c <-chan int) {
+		for n := range c {
+			out <- n
+		}
+	}
+
+	for _, c := range cs {
+		go output(c)
+	}
+
+	return out
 }

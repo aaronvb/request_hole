@@ -1,8 +1,9 @@
 package protocol
 
 import (
-	"sync"
+	"time"
 
+	"github.com/aaronvb/logparams"
 	"github.com/aaronvb/logrequest"
 )
 
@@ -11,13 +12,16 @@ import (
 // If a protocol closes(ie: from and error), we use the second channel which is used to
 // send an int(1 signals quit).
 type Protocol interface {
-	Start(*sync.WaitGroup, []chan RequestPayload, []chan int)
+	Start([]chan RequestPayload, []chan int, []chan int)
 }
 
 // RequestPayload is the request payload we receive from an incoming request that we use with
 // the renderers.
 type RequestPayload struct {
-	Fields  logrequest.RequestFields `json:"fields"`
-	Headers map[string][]string      `json:"headers"`
-	Params  string                   `json:"params"`
+	ID          string                   `json:"id"`
+	Fields      logrequest.RequestFields `json:"fields"`
+	Headers     map[string][]string      `json:"headers"`
+	Params      string                   `json:"params"`
+	ParamFields logparams.ParamFields    `json:"paramFields"`
+	CreatedAt   time.Time                `json:"createdAt"`
 }
