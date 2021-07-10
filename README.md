@@ -86,7 +86,7 @@ $ rh http --log rh.log
 ```
 <img width="787" alt="Request Hole CLI log" src="https://user-images.githubusercontent.com/100900/120877567-fac2e980-c552-11eb-8ec0-8075bc6c0cd8.png">
 
-### Exposing Request Hole to the internet
+## Exposing Request Hole to the internet
 Sometimes we need to expose `rh` to the internet to test applications or webhooks from outside of our local dev env. The best way to do this is to use a tunneling service such as [ngrok](https://ngrok.com).
 ```
 $ ngrok http 3001
