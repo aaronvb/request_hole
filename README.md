@@ -7,7 +7,6 @@
 `rh` is a CLI tool for creating an ephemeral endpoint for testing and inspecting requests from your application or webhook.
 
 <img width="1136" alt="Request Hole CLI web ui" src="https://user-images.githubusercontent.com/100900/125158715-9b866500-e10e-11eb-9438-36d0f8325c60.png">
-<img width="788" alt="Request Hole CLI" src="https://user-images.githubusercontent.com/100900/120265767-63048900-c23c-11eb-9a20-079ab9822767.png">
 
 
 ## Installation
