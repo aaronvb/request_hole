@@ -5,7 +5,6 @@ export const SERVER_INFO = gql`
     serverInfo {
       request_address
       request_port
-      web_port
       build_info
     }
   }
