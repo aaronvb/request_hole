@@ -46,7 +46,7 @@ const client = new ApolloClient({
   cache: new InMemoryCache({
     typePolicies: {
       ServerInfo: {
-        merge: false,
+        merge: true,
       },
     },
   }),
