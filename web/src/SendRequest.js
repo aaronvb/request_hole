@@ -118,14 +118,12 @@ function SendRequest(props) {
               />
             </div>
             <button
-              role="button"
               onClick={() => sendRequest()}
               className="mr-2 text-white bg-red-500 border-0 py-2 px-6 focus:outline-none hover:bg-red-600 rounded text-base"
             >
               Send Request
             </button>
             <button
-              role="button"
               onClick={props.close}
               className="text-white bg-red-500 border-0 py-2 px-6 focus:outline-none hover:bg-red-600 rounded text-base"
             >
