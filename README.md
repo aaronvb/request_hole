@@ -1,10 +1,12 @@
 # Request Hole CLI
 [![go.dev Reference](https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white&style=flat)](https://pkg.go.dev/github.com/aaronvb/request_hole)
-[![Test](https://github.com/aaronvb/request_hole/workflows/Test/badge.svg)](https://github.com/aaronvb/request_hole/actions/workflows/tests.yml)
+[![Go Tests](https://github.com/aaronvb/request_hole/workflows/Test%20Go/badge.svg)](https://github.com/aaronvb/request_hole/actions/workflows/test_go.yml)
+[![JS Tests](https://github.com/aaronvb/request_hole/workflows/Test%20JS/badge.svg)](https://github.com/aaronvb/request_hole/actions/workflows/test_js.yml)
 [![Builds](https://github.com/aaronvb/request_hole/workflows/Builds/badge.svg)](https://github.com/aaronvb/request_hole/actions/workflows/builds.yml)
 
 `rh` is a CLI tool for creating an ephemeral endpoint for testing and inspecting requests from your application or webhook.
 
+<img width="1136" alt="Request Hole CLI web ui" src="https://user-images.githubusercontent.com/100900/125158715-9b866500-e10e-11eb-9438-36d0f8325c60.png">
 <img width="788" alt="Request Hole CLI" src="https://user-images.githubusercontent.com/100900/120265767-63048900-c23c-11eb-9a20-079ab9822767.png">
 
 
@@ -48,10 +50,21 @@ Flags:
       --log string          writes incoming requests to the specified log file (example: --log rh.log)
   -p, --port int            sets the port for the endpoint (default 8080)
   -r, --response_code int   sets the response code (default 200)
+      --web                 runs a web server to show incoming requests
+      --web_port int        sets the port for the web server (default 8081)
 
 Use "rh [command] --help" for more information about a command.
 ```
+## Using the Web UI
+### Create an HTTP endpoint
+```
+$ rh http --web
+```
+This option will open a web UI that will display the incoming requests. Incoming requests will render live in the browser when they are received.
 
+<img width="1136" alt="Request Hole CLI web ui" src="https://user-images.githubusercontent.com/100900/125158715-9b866500-e10e-11eb-9438-36d0f8325c60.png">
+
+## Using the CLI
 ### Creating an HTTP endpoint
 To create an http endpoint with default settings (port 8080, return status code 200):
 ```
@@ -79,3 +92,35 @@ Sometimes we need to expose `rh` to the internet to test applications or webhook
 $ ngrok http 3001
 $ rh http -p 3001
 ```
+
+## Running Tests and Building
+It is recommended to run the JS build first so that the Go build can embed the latest web UI build.
+
+### CLI
+```
+$ go test -v ./...
+$ go build
+```
+
+### Web UI
+```
+$ cd web; yarn test
+$ cd web; yarn build
+```
+#### For Development
+```
+$ cd web; yarn start
+```
+Visit `localhost:3000`
+
+## Built With
+- Go https://golang.org/
+- logparams https://github.com/aaronvb/logparams
+- logrequest https://github.com/aaronvb/logrequest
+- cobra https://github.com/spf13/cobra
+- gqlgen https://github.com/99designs/gqlgen (GraphQL/Websockets)
+- gorilla/mux https://github.com/gorilla/mux
+- Apollo https://github.com/apollographql/apollo-client (GraphQL frontend)
+- create-react-app https://github.com/facebook/create-react-app
+- Tailwind https://github.com/tailwindlabs/tailwindcss
+- React Testing Library https://github.com/testing-library/react-testing-library
