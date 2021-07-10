@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os/exec"
+	"runtime"
 	"sync"
 	"time"
 
@@ -53,6 +55,7 @@ func (web *Web) Start(wg *sync.WaitGroup, rp chan protocol.RequestPayload, q cha
 	defer wg.Done()
 
 	go func() {
+		open(fmt.Sprintf("http://%s/", addr))
 		err := srv.ListenAndServe()
 		str := pterm.Error.WithShowLineNumber(false).Sprintf("Web: %s\n", err)
 		pterm.Printo(str) // Overwrite last line
@@ -138,4 +141,23 @@ type httpErrorLog struct{}
 func (e *httpErrorLog) Write(b []byte) (n int, err error) {
 	pterm.Error.WithShowLineNumber(false).Println(string(b))
 	return len(b), nil
+}
+
+// open opens the terminal to the web UI.
+// https://stackoverflow.com/a/39324149
+func open(url string) error {
+	var cmd string
+	var args []string
+
+	switch runtime.GOOS {
+	case "windows":
+		cmd = "cmd"
+		args = []string{"/c", "start"}
+	case "darwin":
+		cmd = "open"
+	default: // "linux", "freebsd", "openbsd", "netbsd"
+		cmd = "xdg-open"
+	}
+	args = append(args, url)
+	return exec.Command(cmd, args...).Start()
 }
