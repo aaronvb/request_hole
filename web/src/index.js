@@ -47,8 +47,8 @@ const client = new ApolloClient({
     typePolicies: {
       ServerInfo: {
         merge: false,
-      }
-    }
+      },
+    },
   }),
 });
 
