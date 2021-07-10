@@ -6,7 +6,7 @@ require (
 	github.com/99designs/gqlgen v0.13.0
 	github.com/aaronvb/logparams v1.2.1
 	github.com/aaronvb/logrequest v1.0.0
-	github.com/google/uuid v1.2.0 // indirect
+	github.com/google/uuid v1.2.0
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/pterm/pterm v0.12.18
