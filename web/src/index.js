@@ -13,12 +13,17 @@ import {
   HttpLink,
 } from "@apollo/client";
 
+let host = document.location.host;
+if (process.env.NODE_ENV === "development") {
+  host = "localhost:8081";
+}
+
 const httpLink = new HttpLink({
-  uri: "http://localhost:8081/query",
+  uri: `http://${host}/query`,
 });
 
 const wsLink = new WebSocketLink({
-  uri: `ws://localhost:8081/query`,
+  uri: `ws://${host}/query`,
   options: {
     reconnect: true,
   },
