@@ -16,8 +16,18 @@ Create an endpoint that accepts http connections.
 	Run: httpCommand,
 }
 
+var wsCmd = &cobra.Command{
+	Use:   "ws",
+	Short: "Creates a websocket endpoint",
+	Long: `rh: ws
+Create an endpoint that accepts websocket connections.
+`,
+	Run: wsCommand,
+}
+
 func init() {
 	rootCmd.AddCommand(httpCmd)
+	rootCmd.AddCommand(wsCmd)
 }
 
 func httpCommand(cmd *cobra.Command, args []string) {
@@ -71,6 +81,59 @@ func httpCommand(cmd *cobra.Command, args []string) {
 	srv := server.Server{
 		FlagData:  flagData,
 		Protocol:  httpServer,
+		Renderers: renderers,
+	}
+
+	srv.Start()
+}
+
+func wsCommand(cmd *cobra.Command, args []string) {
+	renderers := make([]renderer.Renderer, 0)
+
+	// Collect flag data into struct to use with renderers
+	flagData := server.FlagData{
+		Addr:      Address,
+		BuildInfo: BuildInfo,
+		Details:   Details,
+		LogFile:   LogFile,
+		Port:      Port,
+		Web:       Web,
+		WebPort:   WebPort,
+	}
+
+	if Web {
+		web := &renderer.Web{
+			Port:         WebPort,
+			StaticFiles:  StaticFS,
+			RequestAddr:  Address,
+			RequestPort:  Port,
+			ResponseCode: ResponseCode,
+			BuildInfo:    BuildInfo,
+		}
+		renderers = append(renderers, web)
+	} else {
+		printer := &renderer.Printer{Details: Details}
+		renderers = append(renderers, printer)
+	}
+
+	if LogFile != "" {
+		logger := &renderer.Logger{
+			FilePath: LogFile,
+			Details:  Details,
+			Addr:     Address,
+			Port:     Port,
+		}
+		renderers = append(renderers, logger)
+	}
+
+	wsServer := &protocol.Ws{
+		Addr: Address,
+		Port: Port,
+	}
+
+	srv := server.Server{
+		FlagData:  flagData,
+		Protocol:  wsServer,
 		Renderers: renderers,
 	}
 
