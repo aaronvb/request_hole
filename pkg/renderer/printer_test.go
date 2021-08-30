@@ -50,3 +50,15 @@ func TestIncomingRequestHeadersTables(t *testing.T) {
 		t.Errorf("Expected %s, got %s", expected, result)
 	}
 }
+
+func TestIncomingRequestEmptyHeaders(t *testing.T) {
+	pterm.DisableColor()
+	printer := Printer{}
+	headers := map[string][]string{}
+	rp := protocol.RequestPayload{Headers: headers}
+	result := printer.incomingRequestHeadersTable(rp)
+
+	if result != "" {
+		t.Errorf("Expected %s, got %s", "", result)
+	}
+}

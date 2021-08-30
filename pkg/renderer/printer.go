@@ -56,7 +56,9 @@ func (p *Printer) incomingRequest(r protocol.RequestPayload) {
 	// default is false if no flag is passed.
 	if p.Details {
 		table := p.incomingRequestHeadersTable(r)
-		pterm.Printf("%s\n", table)
+		if table != "" {
+			pterm.Printf("%s\n", table)
+		}
 	}
 
 	p.startSpinner()
@@ -76,6 +78,10 @@ func (p *Printer) incomingRequestText(r protocol.RequestPayload) string {
 // incomingRequestHeadersTable constructs the headers table string from the RequestPayload.
 // This takes the headers map from the request and sorts it alphabetically by key.
 func (p *Printer) incomingRequestHeadersTable(r protocol.RequestPayload) string {
+	if len(r.Headers) == 0 {
+		return ""
+	}
+
 	keys := make([]string, 0, len(r.Headers))
 	for key := range r.Headers {
 		keys = append(keys, key)
