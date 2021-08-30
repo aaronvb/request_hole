@@ -37,7 +37,7 @@ func TestRequestHandler(t *testing.T) {
 		{protocol.RequestPayload{Fields: logrequest.RequestFields{Url: "/foo"}}},
 		{protocol.RequestPayload{Fields: logrequest.RequestFields{Url: "/bar"}}},
 		{protocol.RequestPayload{Fields: logrequest.RequestFields{Method: http.MethodGet}}},
-		{protocol.RequestPayload{Params: "{\"foo\" => \"bar\"}"}},
+		{protocol.RequestPayload{Message: "{\"foo\" => \"bar\"}"}},
 	}
 
 	webServer := Web{requests: make([]*protocol.RequestPayload, 0)}

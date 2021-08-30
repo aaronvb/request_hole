@@ -107,8 +107,8 @@ func TestLogRequestOneRenderer(t *testing.T) {
 			t.Errorf("Expected %s, got %s", test.path, rp.Fields.Url)
 		}
 
-		if rp.Params != test.expectedParams {
-			t.Errorf("Expected %s, got %s", test.expectedParams, rp.Params)
+		if rp.Message != test.expectedParams {
+			t.Errorf("Expected %s, got %s", test.expectedParams, rp.Message)
 		}
 
 		expectedHeaderValue := rp.Headers[test.headerKey][0]
@@ -168,8 +168,8 @@ func TestLogRequestManyRenderers(t *testing.T) {
 			t.Errorf("Expected %s, got %s", test.path, rpA.Fields.Url)
 		}
 
-		if rpA.Params != test.expectedParams {
-			t.Errorf("Expected %s, got %s", test.expectedParams, rpA.Params)
+		if rpA.Message != test.expectedParams {
+			t.Errorf("Expected %s, got %s", test.expectedParams, rpA.Message)
 		}
 
 		if rpB.Fields.Method != test.method {
@@ -180,8 +180,8 @@ func TestLogRequestManyRenderers(t *testing.T) {
 			t.Errorf("Expected %s, got %s", test.path, rpB.Fields.Url)
 		}
 
-		if rpB.Params != test.expectedParams {
-			t.Errorf("Expected %s, got %s", test.expectedParams, rpB.Params)
+		if rpB.Message != test.expectedParams {
+			t.Errorf("Expected %s, got %s", test.expectedParams, rpB.Message)
 		}
 	}
 }

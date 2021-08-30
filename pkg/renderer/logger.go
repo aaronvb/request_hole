@@ -95,7 +95,7 @@ func (l *Logger) incomingRequest(r protocol.RequestPayload) {
 
 // incomingRequestText converts the RequestPayload into a printable string.
 func (l *Logger) incomingRequestText(r protocol.RequestPayload) string {
-	return fmt.Sprintf("%s %s %s", r.Fields.Method, r.Fields.Url, r.Params)
+	return fmt.Sprintf("%s %s %s", r.Fields.Method, r.Fields.Url, r.Message)
 }
 
 // incomingRequestHeaders takes the headers from the request, sorts them alphabetically,

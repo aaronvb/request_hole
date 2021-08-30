@@ -21,7 +21,7 @@ type RequestPayload struct {
 	ID          string                   `json:"id"`
 	Fields      logrequest.RequestFields `json:"fields"`
 	Headers     map[string][]string      `json:"headers"`
-	Params      string                   `json:"params"`
+	Message     string                   `json:"message"`
 	ParamFields logparams.ParamFields    `json:"paramFields"`
 	CreatedAt   time.Time                `json:"createdAt"`
 }

@@ -17,7 +17,7 @@ func TestIncomingRequestText(t *testing.T) {
 		Url:    "/foobar",
 	}
 	params := "{\"foo\" => \"bar\"}"
-	rp := protocol.RequestPayload{Fields: fields, Params: params}
+	rp := protocol.RequestPayload{Fields: fields, Message: params}
 	result := printer.incomingRequestText(rp)
 	expected := fmt.Sprintf("%s %s", fields.Url, params)
 

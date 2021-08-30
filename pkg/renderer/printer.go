@@ -67,7 +67,7 @@ func (p *Printer) incomingRequestText(r protocol.RequestPayload) string {
 	urlWithStyle := pterm.DefaultBasicText.
 		WithStyle(pterm.NewStyle(pterm.FgWhite)).Sprintf(r.Fields.Url)
 	paramsWithStyle := pterm.DefaultBasicText.
-		WithStyle(pterm.NewStyle(pterm.Fuzzy)).Sprintf(r.Params)
+		WithStyle(pterm.NewStyle(pterm.Fuzzy)).Sprintf(r.Message)
 
 	text := fmt.Sprintf("%s %s", urlWithStyle, paramsWithStyle)
 	return text

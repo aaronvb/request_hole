@@ -26,7 +26,7 @@ func TestLoggerIncomingRequest(t *testing.T) {
 		Url:    "/foobar",
 	}
 	params := "{\"foo\" => \"bar\"}"
-	rp := protocol.RequestPayload{Fields: fields, Params: params}
+	rp := protocol.RequestPayload{Fields: fields, Message: params}
 	text := logger.incomingRequestText(rp)
 	expected := fmt.Sprintf("%s %s %s", fields.Method, fields.Url, params)
 

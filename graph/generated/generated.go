@@ -432,7 +432,8 @@ scalar Time
 scalar TimeDuration
 scalar MapSlice
 scalar MapString
-scalar Map`, BuiltIn: false},
+scalar Map
+`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
