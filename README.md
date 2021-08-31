@@ -43,14 +43,15 @@ Available Commands:
   version     Print version number of Request Hole
 
 Flags:
-  -a, --address string      sets the address for the endpoint (default "localhost")
-      --details             shows header details in the request
-  -h, --help                help for rh
-      --log string          writes incoming requests to the specified log file (example: --log rh.log)
-  -p, --port int            sets the port for the endpoint (default 8080)
-  -r, --response_code int   sets the response code (default 200)
-      --web                 runs a web server to show incoming requests
-      --web_port int        sets the port for the web server (default 8081)
+  -a, --address string       sets the address for the endpoint (default "localhost")
+      --details              shows header details in the request
+  -h, --help                 help for rh
+      --log string           writes incoming requests to the specified log file (example: --log rh.log)
+  -p, --port int             sets the port for the endpoint (default 8080)
+  -r, --response_code int    sets the response code (default 200)
+      --web                  runs the web UI to show incoming requests
+      --web_address string   sets the address for the web UI (default "localhost")
+      --web_port int         sets the port for the web UI (default 8081)
 
 Use "rh [command] --help" for more information about a command.
 ```
