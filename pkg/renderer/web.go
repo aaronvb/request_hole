@@ -24,15 +24,31 @@ import (
 	"github.com/rs/cors"
 )
 
+// Web is the renderer for the web UI.
 type Web struct {
-	BuildInfo     map[string]string
-	Port          int
-	ResponseCode  int
-	RequestAddr   string
-	RequestPort   int
-	StaticFiles   http.FileSystem
-	mu            sync.Mutex
-	requests      []*protocol.RequestPayload
+	// Address is the address the web UI server will bind to.
+	Address string
+
+	// BuildInfo contains build information.
+	BuildInfo map[string]string
+
+	// Port is the port the web UI server will run on.
+	Port int
+
+	// These are used for showing information about the request endpoint in the
+	// web UI.
+	ResponseCode int
+	RequestAddr  string
+	RequestPort  int
+
+	StaticFiles http.FileSystem
+
+	mu sync.Mutex
+
+	// requests contain the incoming requests.
+	requests []*protocol.RequestPayload
+
+	// subscriptions contain the websocket connections to our graphql subscribers.
 	subscriptions map[string]chan *protocol.RequestPayload
 }
 
@@ -42,7 +58,7 @@ func (web *Web) Start(wg *sync.WaitGroup, rp chan protocol.RequestPayload, q cha
 	web.requests = make([]*protocol.RequestPayload, 0)
 	web.subscriptions = make(map[string]chan *protocol.RequestPayload)
 
-	addr := fmt.Sprintf("localhost:%d", web.Port)
+	addr := fmt.Sprintf("%s:%d", web.Address, web.Port)
 	errorLog := log.New(&httpErrorLog{}, "", 0)
 
 	srv := &http.Server{

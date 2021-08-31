@@ -32,11 +32,13 @@ func httpCommand(cmd *cobra.Command, args []string) {
 		Port:         Port,
 		ResponseCode: ResponseCode,
 		Web:          Web,
+		WebAddress:   WebAddress,
 		WebPort:      WebPort,
 	}
 
 	if Web {
 		web := &renderer.Web{
+			Address:      WebAddress,
 			Port:         WebPort,
 			StaticFiles:  StaticFS,
 			RequestAddr:  Address,

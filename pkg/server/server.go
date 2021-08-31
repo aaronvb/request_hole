@@ -48,6 +48,9 @@ type FlagData struct {
 	// Web determines if we use the web renderer, otherwise defaults to the printer renderer.
 	Web bool
 
+	// WebAddress is the address the web UI will bind to.
+	WebAddress string
+
 	// WebPort defines which port we host the web renderer at, defaults to 8081.
 	WebPort int
 }
@@ -119,7 +122,7 @@ func (s *Server) startText() string {
 	text := fmt.Sprintf("%s %s\nListening on http://%s:%d", primary, version, s.FlagData.Addr, s.FlagData.Port)
 
 	if s.FlagData.Web {
-		text = fmt.Sprintf("%s\nWeb running on: http://localhost:%d", text, s.FlagData.WebPort)
+		text = fmt.Sprintf("%s\nWeb running on: http://%s:%d", text, s.FlagData.WebAddress, s.FlagData.WebPort)
 	}
 
 	if s.FlagData.Details {
