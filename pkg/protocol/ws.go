@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/aaronvb/logparams"
 	"github.com/aaronvb/logrequest"
 
-	"github.com/aaronvb/logparams"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -65,6 +65,8 @@ func (ws *Ws) quitRenderers() {
 func (ws *Ws) routes() http.Handler {
 	r := mux.NewRouter()
 	r.PathPrefix("/").HandlerFunc(ws.defaultHandler)
+	r.Use(ws.logRequest)
+
 	handler := cors.AllowAll().Handler(r)
 
 	return handler
@@ -83,8 +85,6 @@ func (ws *Ws) defaultHandler(w http.ResponseWriter, r *http.Request) {
 		pterm.Printo(ptermErr)
 
 	}
-	// Log connection request
-	ws.logRequest(r)
 
 	defer func(c *websocket.Conn) {
 		err := c.Close()
@@ -113,10 +113,12 @@ func (ws *Ws) defaultHandler(w http.ResponseWriter, r *http.Request) {
 
 func (ws *Ws) logRequest(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		lr := logrequest.LogRequest{Request: r, Writer: w, Handler: next}
-		fields := lr.ToFields()
-		params := logparams.LogParams{Request: r, HidePrefix: true}
+		fields := logrequest.RequestFields{
+			Method: r.Method,
+			Url:    r.URL.RequestURI(),
+		}
 
+		params := logparams.LogParams{Request: r, HidePrefix: true}
 		req := RequestPayload{
 			ID:          uuid.New().String(),
 			Fields:      fields,
@@ -129,6 +131,8 @@ func (ws *Ws) logRequest(next http.Handler) http.Handler {
 		for _, rendererChannel := range ws.rendererChannels {
 			rendererChannel <- req
 		}
+
+		next.ServeHTTP(w, r)
 	})
 }
 
