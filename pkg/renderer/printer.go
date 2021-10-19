@@ -66,12 +66,16 @@ func (p *Printer) incomingRequest(r protocol.RequestPayload) {
 
 // incomingRequestText converts the RequestPayload into a printable string.
 func (p *Printer) incomingRequestText(r protocol.RequestPayload) string {
-	urlWithStyle := pterm.DefaultBasicText.
-		WithStyle(pterm.NewStyle(pterm.FgWhite)).Sprintf(r.Fields.Url)
+	urlWithStyle := ""
+	if r.Fields.Url != "" {
+		urlWithStyle = pterm.DefaultBasicText.
+			WithStyle(pterm.NewStyle(pterm.FgWhite)).Sprintf("%s ", r.Fields.Url)
+	}
+
 	paramsWithStyle := pterm.DefaultBasicText.
 		WithStyle(pterm.NewStyle(pterm.Fuzzy)).Sprintf(r.Message)
 
-	text := fmt.Sprintf("%s %s", urlWithStyle, paramsWithStyle)
+	text := fmt.Sprintf("%s%s", urlWithStyle, paramsWithStyle)
 	return text
 }
 
