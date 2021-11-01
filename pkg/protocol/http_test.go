@@ -206,7 +206,9 @@ func TestErrorFromRenderer(t *testing.T) {
 	e2 := make(chan int, 1)
 	chans := []chan int{e1, e2}
 
-	e1 <- 1
+	httpServer := Http{}
+	httpServer.Start(make([]chan RequestPayload, 0), chans, make([]chan int, 0))
+
 	err := <-merge(chans)
 
 	if err != 1 {

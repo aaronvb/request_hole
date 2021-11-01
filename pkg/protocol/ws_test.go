@@ -94,7 +94,7 @@ func TestWsLogRequestOneRenderer(t *testing.T) {
 	}
 }
 
-func TestLogRequestManyRenderers(t *testing.T) {
+func TestWsLogRequestManyRenderers(t *testing.T) {
 	testTable := []struct {
 		method         string
 		path           string
@@ -162,13 +162,13 @@ func TestLogRequestManyRenderers(t *testing.T) {
 	}
 }
 
-func TestQuitRenderers(t *testing.T) {
+func TestWsQuitRenderers(t *testing.T) {
 	q1 := make(chan int, 1)
 	q2 := make(chan int, 1)
 	chans := []chan int{q1, q2}
 
-	httpServer := Http{rendererQuitChannels: chans}
-	httpServer.quitRenderers()
+	wsServer := Ws{rendererQuitChannels: chans}
+	wsServer.quitRenderers()
 	expectedQ1 := <-q1
 	expectedQ2 := <-q2
 
@@ -177,7 +177,7 @@ func TestQuitRenderers(t *testing.T) {
 	}
 }
 
-func TestErrorFromRenderer(t *testing.T) {
+func TestWsErrorFromRenderer(t *testing.T) {
 	e1 := make(chan int, 1)
 	e2 := make(chan int, 1)
 	chans := []chan int{e1, e2}
