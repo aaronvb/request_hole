@@ -204,14 +204,20 @@ func TestQuitRenderers(t *testing.T) {
 func TestErrorFromRenderer(t *testing.T) {
 	e1 := make(chan int, 1)
 	e2 := make(chan int, 1)
-	chans := []chan int{e1, e2}
+	errorChans := []chan int{e1, e2}
 
+	q1 := make(chan int, 1)
+	q2 := make(chan int, 1)
+	quitChans := []chan int{q1, q2}
+
+	e1 <- 1
 	httpServer := Http{}
-	httpServer.Start(make([]chan RequestPayload, 0), chans, make([]chan int, 0))
+	httpServer.Start(make([]chan RequestPayload, 0), quitChans, errorChans)
 
-	err := <-merge(chans)
+	expectedQ1 := <-q1
+	expectedQ2 := <-q2
 
-	if err != 1 {
-		t.Error("Expect	channel to receive error signal")
+	if expectedQ1 != 1 || expectedQ2 != 1 {
+		t.Error("Expected channel to receive quit signal")
 	}
 }
