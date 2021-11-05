@@ -3,7 +3,16 @@ import SendRequest from "./SendRequest";
 import Header from "./Header";
 import { useState } from "react";
 
-const filters = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD"];
+const filters = [
+  "GET",
+  "POST",
+  "PUT",
+  "PATCH",
+  "DELETE",
+  "HEAD",
+  "OPTIONS",
+  "RECEIVE",
+];
 
 function App() {
   const [sendRequestVisible, setSendRequestVisible] = useState(false);
