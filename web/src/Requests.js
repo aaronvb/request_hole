@@ -18,6 +18,7 @@ export const ALL_REQUESTS = gql`
         json_array
       }
       created_at
+      message
     }
   }
 `;
@@ -38,6 +39,7 @@ export const REQUESTS_SUBSCRIPTION = gql`
         json_array
       }
       created_at
+      message
     }
   }
 `;
@@ -64,7 +66,7 @@ function AllRequests(props) {
     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
   return filterRequests(sortedRequests, props.selectedFilter).map(
-    ({ id, fields, headers, param_fields, created_at }) => (
+    ({ id, fields, headers, param_fields, created_at, message }) => (
       <Request
         key={id}
         created_at={created_at}
@@ -73,6 +75,7 @@ function AllRequests(props) {
         param_fields={param_fields}
         id={id}
         showAllDetails={props.showAllDetails}
+        message={message}
       />
     )
   );
