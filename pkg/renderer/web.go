@@ -35,6 +35,9 @@ type Web struct {
 	// Port is the port the web UI server will run on.
 	Port int
 
+	// Protocol is the protocol the web UI server will use.
+	Protocol string
+
 	// These are used for showing information about the request endpoint in the
 	// web UI.
 	ResponseCode int
@@ -114,6 +117,7 @@ func (web *Web) gqlHandler(w http.ResponseWriter, r *http.Request) {
 		WebPort:        web.Port,
 		ResponseCode:   web.ResponseCode,
 		BuildInfo:      web.BuildInfo,
+		Protocol:       web.Protocol,
 	}
 	// Pass pointer to requests and subscriptions
 	gqlSrv := handler.New(

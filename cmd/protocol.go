@@ -55,6 +55,7 @@ func httpCommand(cmd *cobra.Command, args []string) {
 			RequestPort:  Port,
 			ResponseCode: ResponseCode,
 			BuildInfo:    BuildInfo,
+			Protocol:     "http",
 		}
 		renderers = append(renderers, web)
 	} else {
@@ -109,6 +110,7 @@ func wsCommand(cmd *cobra.Command, args []string) {
 			RequestPort:  Port,
 			ResponseCode: ResponseCode,
 			BuildInfo:    BuildInfo,
+			Protocol:     "ws",
 		}
 		renderers = append(renderers, web)
 	} else {

@@ -80,11 +80,13 @@ type ComplexityRoot struct {
 		Fields      func(childComplexity int) int
 		Headers     func(childComplexity int) int
 		ID          func(childComplexity int) int
+		Message     func(childComplexity int) int
 		ParamFields func(childComplexity int) int
 	}
 
 	ServerInfo struct {
 		BuildInfo      func(childComplexity int) int
+		Protocol       func(childComplexity int) int
 		RequestAddress func(childComplexity int) int
 		RequestPort    func(childComplexity int) int
 		ResponseCode   func(childComplexity int) int
@@ -248,6 +250,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.RequestPayload.ID(childComplexity), true
 
+	case "RequestPayload.message":
+		if e.complexity.RequestPayload.Message == nil {
+			break
+		}
+
+		return e.complexity.RequestPayload.Message(childComplexity), true
+
 	case "RequestPayload.param_fields":
 		if e.complexity.RequestPayload.ParamFields == nil {
 			break
@@ -261,6 +270,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.ServerInfo.BuildInfo(childComplexity), true
+
+	case "ServerInfo.protocol":
+		if e.complexity.ServerInfo.Protocol == nil {
+			break
+		}
+
+		return e.complexity.ServerInfo.Protocol(childComplexity), true
 
 	case "ServerInfo.request_address":
 		if e.complexity.ServerInfo.RequestAddress == nil {
@@ -402,9 +418,10 @@ type ParamFields {
 type RequestPayload {
 	id: String!
   fields: RequestFields!
-  headers: MapSlice!
+  headers: MapSlice
 	param_fields: ParamFields!
 	created_at: Time!
+	message: String
 }
 
 type ServerInfo {
@@ -413,6 +430,7 @@ type ServerInfo {
 	web_port: Int!
 	response_code: Int!
 	build_info: MapString
+	protocol: String!
 }
 
 type Query {
@@ -1135,14 +1153,11 @@ func (ec *executionContext) _RequestPayload_headers(ctx context.Context, field g
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(map[string][]string)
 	fc.Result = res
-	return ec.marshalNMapSlice2map(ctx, field.Selections, res)
+	return ec.marshalOMapSlice2map(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _RequestPayload_param_fields(ctx context.Context, field graphql.CollectedField, obj *protocol.RequestPayload) (ret graphql.Marshaler) {
@@ -1213,6 +1228,38 @@ func (ec *executionContext) _RequestPayload_created_at(ctx context.Context, fiel
 	res := resTmp.(time.Time)
 	fc.Result = res
 	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _RequestPayload_message(ctx context.Context, field graphql.CollectedField, obj *protocol.RequestPayload) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "RequestPayload",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Message, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _ServerInfo_request_address(ctx context.Context, field graphql.CollectedField, obj *model.ServerInfo) (ret graphql.Marshaler) {
@@ -1385,6 +1432,41 @@ func (ec *executionContext) _ServerInfo_build_info(ctx context.Context, field gr
 	res := resTmp.(map[string]string)
 	fc.Result = res
 	return ec.marshalOMapString2map(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ServerInfo_protocol(ctx context.Context, field graphql.CollectedField, obj *model.ServerInfo) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ServerInfo",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Protocol, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Subscription_request(ctx context.Context, field graphql.CollectedField) (ret func() graphql.Marshaler) {
@@ -1567,6 +1649,41 @@ func (ec *executionContext) ___Directive_args(ctx context.Context, field graphql
 	res := resTmp.([]introspection.InputValue)
 	fc.Result = res
 	return ec.marshalN__InputValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐInputValueᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) ___Directive_isRepeatable(ctx context.Context, field graphql.CollectedField, obj *introspection.Directive) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "__Directive",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsRepeatable, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) ___EnumValue_name(ctx context.Context, field graphql.CollectedField, obj *introspection.EnumValue) (ret graphql.Marshaler) {
@@ -2723,9 +2840,6 @@ func (ec *executionContext) _RequestPayload(ctx context.Context, sel ast.Selecti
 			}
 		case "headers":
 			out.Values[i] = ec._RequestPayload_headers(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "param_fields":
 			out.Values[i] = ec._RequestPayload_param_fields(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -2736,6 +2850,8 @@ func (ec *executionContext) _RequestPayload(ctx context.Context, sel ast.Selecti
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "message":
+			out.Values[i] = ec._RequestPayload_message(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -2780,6 +2896,11 @@ func (ec *executionContext) _ServerInfo(ctx context.Context, sel ast.SelectionSe
 			}
 		case "build_info":
 			out.Values[i] = ec._ServerInfo_build_info(ctx, field, obj)
+		case "protocol":
+			out.Values[i] = ec._ServerInfo_protocol(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -2836,6 +2957,11 @@ func (ec *executionContext) ___Directive(ctx context.Context, sel ast.SelectionS
 			}
 		case "args":
 			out.Values[i] = ec.___Directive_args(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "isRepeatable":
+			out.Values[i] = ec.___Directive_isRepeatable(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -3086,27 +3212,6 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
-func (ec *executionContext) unmarshalNMapSlice2map(ctx context.Context, v interface{}) (map[string][]string, error) {
-	res, err := model.UnmarshalMapSlice(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNMapSlice2map(ctx context.Context, sel ast.SelectionSet, v map[string][]string) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := model.MarshalMapSlice(v)
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-	}
-	return res
-}
-
 func (ec *executionContext) marshalNParamFields2githubᚗcomᚋaaronvbᚋlogparamsᚐParamFields(ctx context.Context, sel ast.SelectionSet, v logparams.ParamFields) graphql.Marshaler {
 	return ec._ParamFields(ctx, sel, &v)
 }
@@ -3153,6 +3258,13 @@ func (ec *executionContext) marshalNRequestPayload2ᚕᚖgithubᚗcomᚋaaronvb�
 
 	}
 	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
 	return ret
 }
 
@@ -3249,6 +3361,13 @@ func (ec *executionContext) marshalN__Directive2ᚕgithubᚗcomᚋ99designsᚋgq
 
 	}
 	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
 	return ret
 }
 
@@ -3322,6 +3441,13 @@ func (ec *executionContext) marshalN__DirectiveLocation2ᚕstringᚄ(ctx context
 
 	}
 	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
 	return ret
 }
 
@@ -3371,6 +3497,13 @@ func (ec *executionContext) marshalN__InputValue2ᚕgithubᚗcomᚋ99designsᚋg
 
 	}
 	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
 	return ret
 }
 
@@ -3412,6 +3545,13 @@ func (ec *executionContext) marshalN__Type2ᚕgithubᚗcomᚋ99designsᚋgqlgen�
 
 	}
 	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
 	return ret
 }
 
@@ -3515,6 +3655,21 @@ func (ec *executionContext) marshalOMap2ᚕmap(ctx context.Context, sel ast.Sele
 	return ret
 }
 
+func (ec *executionContext) unmarshalOMapSlice2map(ctx context.Context, v interface{}) (map[string][]string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := model.UnmarshalMapSlice(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOMapSlice2map(ctx context.Context, sel ast.SelectionSet, v map[string][]string) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return model.MarshalMapSlice(v)
+}
+
 func (ec *executionContext) unmarshalOMapString2map(ctx context.Context, v interface{}) (map[string]string, error) {
 	if v == nil {
 		return nil, nil
@@ -3598,6 +3753,13 @@ func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgq
 
 	}
 	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
 	return ret
 }
 
@@ -3638,6 +3800,13 @@ func (ec *executionContext) marshalO__Field2ᚕgithubᚗcomᚋ99designsᚋgqlgen
 
 	}
 	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
 	return ret
 }
 
@@ -3678,6 +3847,13 @@ func (ec *executionContext) marshalO__InputValue2ᚕgithubᚗcomᚋ99designsᚋg
 
 	}
 	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
 	return ret
 }
 
@@ -3725,6 +3901,13 @@ func (ec *executionContext) marshalO__Type2ᚕgithubᚗcomᚋ99designsᚋgqlgen�
 
 	}
 	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
 	return ret
 }
 
