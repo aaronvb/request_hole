@@ -1,17 +1,18 @@
 package protocol
 
 import (
-	"bytes"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
+
+	"github.com/gorilla/websocket"
 )
 
 func TestWsLogRequestOneRenderer(t *testing.T) {
 	testTable := []struct {
 		method         string
 		path           string
-		body           string
 		expectedParams string
 		headerKey      string
 		headerValue    string
@@ -20,58 +21,33 @@ func TestWsLogRequestOneRenderer(t *testing.T) {
 			http.MethodGet,
 			"/foo",
 			"",
-			"",
 			"Foo",
 			"Bar",
 		},
 		{
-			http.MethodPost,
-			"/foo/bar",
-			"{\"foo\": \"bar\"}",
-			"{\"foo\" => \"bar\"}",
-			"Content-Type",
-			"application/json",
-		},
-		{
-			http.MethodDelete,
-			"/foo/1",
-			"",
-			"",
-			"Bearer",
-			"hello!",
-		},
-		{
 			http.MethodGet,
-			"/foo/bar?hello=world",
-			"",
+			"/foo?hello=world",
 			"{\"hello\" => \"world\"}",
-			"Content-Type",
-			"application/json!",
+			"",
+			"",
 		},
 	}
 
 	rpChannel := make(chan RequestPayload, len(testTable))
-	httpServer := Http{ResponseCode: 200, rendererChannels: []chan RequestPayload{rpChannel}}
-	srv := httptest.NewServer(httpServer.routes())
+	wsServer := Ws{rendererChannels: []chan RequestPayload{rpChannel}}
+	srv := httptest.NewServer(wsServer.routes())
 	defer srv.Close()
 
 	for _, test := range testTable {
-		b := bytes.NewBuffer([]byte(test.body))
-		req, err := http.NewRequest(test.method, srv.URL+test.path, b)
+		wsUrl := strings.Replace(srv.URL, "http", "ws", 1)
 
-		if test.headerKey != "" {
-			req.Header.Set(test.headerKey, test.headerValue)
-		}
-
+		header := http.Header{test.headerKey: {test.headerValue}}
+		wsReq, _, err := websocket.DefaultDialer.Dial(wsUrl+test.path, header)
 		if err != nil {
-			t.Error(err)
+			t.Fatalf("%v", err)
 		}
 
-		resp, err := http.DefaultClient.Do(req)
-		if err != nil {
-			t.Error(err)
-		}
-		resp.Body.Close()
+		defer wsReq.Close()
 
 		rp := <-rpChannel
 
@@ -87,9 +63,10 @@ func TestWsLogRequestOneRenderer(t *testing.T) {
 			t.Errorf("Expected %s, got %s", test.expectedParams, rp.Message)
 		}
 
-		expectedHeaderValue := rp.Headers[test.headerKey][0]
-		if expectedHeaderValue != test.headerValue {
-			t.Errorf("Expected %s, got %s", expectedHeaderValue, test.headerValue)
+		if rp.Headers[test.headerKey] != nil {
+			if rp.Headers[test.headerKey][0] != test.headerValue {
+				t.Errorf("Expected %s, got %s", rp.Headers[test.headerKey][0], test.headerValue)
+			}
 		}
 	}
 }
@@ -98,40 +75,27 @@ func TestWsLogRequestManyRenderers(t *testing.T) {
 	testTable := []struct {
 		method         string
 		path           string
-		Body           string
 		expectedParams string
 	}{
-		{http.MethodGet, "/foo", "", ""},
-		{http.MethodPost, "/foo/bar", "{\"foo\": \"bar\"}", "{\"foo\" => \"bar\"}"},
-		{http.MethodDelete, "/foo/1", "", ""},
-		{http.MethodGet, "/foo/bar?hello=world", "", "{\"hello\" => \"world\"}"},
+		{http.MethodGet, "/foo", ""},
+		{http.MethodGet, "/foo/bar?hello=world", "{\"hello\" => \"world\"}"},
 	}
 
 	rpChannelA := make(chan RequestPayload, len(testTable))
 	rpChannelB := make(chan RequestPayload, len(testTable))
-	httpServer := Http{
-		ResponseCode:     200,
-		rendererChannels: []chan RequestPayload{rpChannelA, rpChannelB}}
-	srv := httptest.NewServer(httpServer.routes())
+	wsServer := Ws{rendererChannels: []chan RequestPayload{rpChannelA, rpChannelB}}
+	srv := httptest.NewServer(wsServer.routes())
 	defer srv.Close()
 
 	for _, test := range testTable {
-		b := bytes.NewBuffer([]byte(test.Body))
-		req, err := http.NewRequest(test.method, srv.URL+test.path, b)
+		wsUrl := strings.Replace(srv.URL, "http", "ws", 1)
 
-		if test.Body != "" {
-			req.Header.Set("Content-Type", "application/json")
-		}
-
+		wsReq, _, err := websocket.DefaultDialer.Dial(wsUrl+test.path, nil)
 		if err != nil {
-			t.Error(err)
+			t.Fatalf("%v", err)
 		}
 
-		resp, err := http.DefaultClient.Do(req)
-		if err != nil {
-			t.Error(err)
-		}
-		resp.Body.Close()
+		defer wsReq.Close()
 
 		rpA := <-rpChannelA
 		rpB := <-rpChannelB
@@ -180,12 +144,69 @@ func TestWsQuitRenderers(t *testing.T) {
 func TestWsErrorFromRenderer(t *testing.T) {
 	e1 := make(chan int, 1)
 	e2 := make(chan int, 1)
-	chans := []chan int{e1, e2}
+	errorChans := []chan int{e1, e2}
+
+	q1 := make(chan int, 1)
+	q2 := make(chan int, 1)
+	quitChans := []chan int{q1, q2}
 
 	e1 <- 1
-	err := <-merge(chans)
+	wsServer := Ws{}
+	wsServer.Start(make([]chan RequestPayload, 0), quitChans, errorChans)
 
-	if err != 1 {
-		t.Error("Expect	channel to receive error signal")
+	expectedQ1 := <-q1
+	expectedQ2 := <-q2
+
+	if expectedQ1 != 1 || expectedQ2 != 1 {
+		t.Error("Expected channel to receive quit signal")
+	}
+}
+
+func TestWsLogMessage(t *testing.T) {
+	testTable := []struct {
+		method  string
+		message string
+	}{
+		{"RECEIVE", "Hello"},
+		{"RECEIVE", "World"},
+		{"RECEIVE", "ping"},
+		{"RECEIVE", "fizz"},
+		{"RECEIVE", "buzz"},
+	}
+
+	rpChannel := make(chan RequestPayload, len(testTable)+1)
+	wsServer := Ws{rendererChannels: []chan RequestPayload{rpChannel}}
+	srv := httptest.NewServer(wsServer.routes())
+	defer srv.Close()
+
+	wsUrl := strings.Replace(srv.URL, "http", "ws", 1)
+	wsReq, _, err := websocket.DefaultDialer.Dial(wsUrl, nil)
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	defer wsReq.Close()
+
+	// Initial handshake request
+	wsRequest := <-rpChannel
+	if wsRequest.Fields.Method != "GET" {
+		t.Errorf("Expected %s, got %s", "GET", wsRequest.Fields.Method)
+	}
+
+	// Test each message
+	for _, test := range testTable {
+		if err := wsReq.WriteMessage(websocket.TextMessage, []byte(test.message)); err != nil {
+			t.Fatalf("%v", err)
+		}
+
+		wsMessage := <-rpChannel
+
+		if wsMessage.Fields.Method != test.method {
+			t.Errorf("Expected %s, got %s", test.method, wsMessage.Fields.Method)
+		}
+
+		if wsMessage.Message != test.message {
+			t.Errorf("Expected %s, got %s", test.message, wsMessage.Message)
+		}
 	}
 }
