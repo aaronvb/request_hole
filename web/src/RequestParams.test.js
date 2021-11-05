@@ -52,4 +52,19 @@ describe("RequestParams", () => {
       expect(screen.getByText(/friday/)).toBeInTheDocument();
     });
   });
+
+  describe("message", () => {
+    test("renders a string message", () => {
+      render(<RequestParams message="foo" />);
+
+      expect(screen.getByText(/foo/)).toBeInTheDocument();
+    });
+
+    test("renders a json message", () => {
+      render(<RequestParams message={JSON.stringify({"aloha": "friday"})} />);
+      expect(screen.getByText(/1 item/)).toBeInTheDocument();
+      expect(screen.getByText(/aloha/)).toBeInTheDocument();
+      expect(screen.getByText(/friday/)).toBeInTheDocument();
+    });
+  });
 });
