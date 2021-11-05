@@ -41,6 +41,9 @@ type FlagData struct {
 	// Port is the port the HTTP server will run on.
 	Port int
 
+	// Protocol is the protocol that the server will use to handle incoming requests.
+	Protocol string
+
 	// ResponseCode is the response which our endpoint will return.
 	// Default is 200 if no response code is passed.
 	ResponseCode int
@@ -119,7 +122,7 @@ func (s *Server) startText() string {
 		WithStyle(pterm.NewStyle(pterm.Fuzzy)).
 		Sprintf(s.FlagData.BuildInfo["version"])
 
-	text := fmt.Sprintf("%s %s\nListening on http://%s:%d", primary, version, s.FlagData.Addr, s.FlagData.Port)
+	text := fmt.Sprintf("%s %s\nListening on %s://%s:%d", primary, version, s.FlagData.Protocol, s.FlagData.Addr, s.FlagData.Port)
 
 	if s.FlagData.Web {
 		text = fmt.Sprintf("%s\nWeb running on: http://%s:%d", text, s.FlagData.WebAddress, s.FlagData.WebPort)

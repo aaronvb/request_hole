@@ -40,6 +40,7 @@ func httpCommand(cmd *cobra.Command, args []string) {
 		Details:      Details,
 		LogFile:      LogFile,
 		Port:         Port,
+		Protocol:     "http",
 		ResponseCode: ResponseCode,
 		Web:          Web,
 		WebAddress:   WebAddress,
@@ -98,6 +99,7 @@ func wsCommand(cmd *cobra.Command, args []string) {
 		Details:   Details,
 		LogFile:   LogFile,
 		Port:      Port,
+		Protocol:  "ws",
 		Web:       Web,
 		WebPort:   WebPort,
 	}
