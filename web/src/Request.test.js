@@ -8,6 +8,12 @@ describe("Request", () => {
     expect(screen.getByText("/foobar")).toBeInTheDocument();
   });
 
+  test("does not render url if no headers", () => {
+    render(<Request fields={{ url: "" }} />);
+
+    expect(screen.queryByText(/URL/i)).not.toBeInTheDocument();
+  });
+
   test("renders method", () => {
     render(<Request fields={{ method: "POST" }} />);
 
@@ -20,6 +26,12 @@ describe("Request", () => {
     expect(
       screen.getByText(/(seconds|minutes|hours|days|weeks|months|years) ago/i)
     ).toBeInTheDocument();
+  });
+
+  test("does not render headers component if no headers", () => {
+    render(<Request fields={{ headers: null }} />);
+
+    expect(screen.queryByText(/(\d|no) headers/i)).not.toBeInTheDocument();
   });
 });
 

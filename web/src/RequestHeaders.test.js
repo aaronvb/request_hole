@@ -19,7 +19,13 @@ describe("RequestHeaders", () => {
     expect(screen.getByText(/8 headers/i)).toBeInTheDocument();
   });
 
-  test.each(Object.keys(headers))("renders header %s", header => {
+  test("renders no count if nil", () => {
+    render(<RequestHeaders />);
+
+    expect(screen.getByText(/0 headers/i)).toBeInTheDocument();
+  });
+
+  test.each(Object.keys(headers))("renders header %s", (header) => {
     render(<RequestHeaders headers={headers} />);
 
     expect(screen.getByText(header)).toBeInTheDocument();
