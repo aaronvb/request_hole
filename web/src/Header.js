@@ -7,6 +7,7 @@ export const SERVER_INFO = gql`
       request_address
       request_port
       build_info
+      protocol
     }
   }
 `;
@@ -45,7 +46,7 @@ function Header(props) {
   useEffect(() => {
     if (data) {
       setUrl(
-        `http://${data.serverInfo.request_address}:${data.serverInfo.request_port}`
+        `${data.serverInfo.protocol}://${data.serverInfo.request_address}:${data.serverInfo.request_port}`
       );
       setVersion(data.serverInfo.build_info["version"]);
     }
