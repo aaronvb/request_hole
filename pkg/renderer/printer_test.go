@@ -17,7 +17,7 @@ func TestIncomingRequestText(t *testing.T) {
 		Url:    "/foobar",
 	}
 	params := "{\"foo\" => \"bar\"}"
-	rp := protocol.RequestPayload{Fields: fields, Params: params}
+	rp := protocol.RequestPayload{Fields: fields, Message: params}
 	result := printer.incomingRequestText(rp)
 	expected := fmt.Sprintf("%s %s", fields.Url, params)
 
@@ -48,5 +48,17 @@ func TestIncomingRequestHeadersTables(t *testing.T) {
 
 	if result != expected {
 		t.Errorf("Expected %s, got %s", expected, result)
+	}
+}
+
+func TestIncomingRequestEmptyHeaders(t *testing.T) {
+	pterm.DisableColor()
+	printer := Printer{}
+	headers := map[string][]string{}
+	rp := protocol.RequestPayload{Headers: headers}
+	result := printer.incomingRequestHeadersTable(rp)
+
+	if result != "" {
+		t.Errorf("Expected %s, got %s", "", result)
 	}
 }

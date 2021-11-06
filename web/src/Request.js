@@ -61,12 +61,14 @@ function Request(props) {
       </div>
       <div className="md:flex-grow">
         <div className="flex w-full mx-auto">
-          <div>
-            <h2 className="tracking-midwest text-xs text-gray-400">URL</h2>
-            <h2 className="font-medium text-gray-800 title-font mb-5 text-xl">
-              {props.fields.url}
-            </h2>
-          </div>
+          {props.fields.url !== "" && (
+            <div>
+              <h2 className="tracking-midwest text-xs text-gray-400">URL</h2>
+              <h2 className="font-medium text-gray-800 title-font mb-5 text-xl">
+                {props.fields.url}
+              </h2>
+            </div>
+          )}
           <Details
             id={props.id}
             showDetails={showDetails}
@@ -77,8 +79,11 @@ function Request(props) {
           <section className="text-gray-600 body-font border-t-2 pt-3 border-gray-100">
             <div className="container py-2 mx-auto">
               <div className="flex flex-wrap -m-4">
-                <RequestHeaders headers={props.headers} />
-                <RequestParams params={props.param_fields} />
+                {props.headers && <RequestHeaders headers={props.headers} />}
+                <RequestParams
+                  params={props.param_fields}
+                  message={props.message}
+                />
               </div>
             </div>
           </section>

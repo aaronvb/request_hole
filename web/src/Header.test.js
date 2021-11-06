@@ -2,7 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { MockedProvider } from "@apollo/client/testing";
 import Header, { SERVER_INFO } from "./Header";
 
-const mocks = [
+const httpMocks = [
   {
     request: {
       query: SERVER_INFO,
@@ -16,6 +16,28 @@ const mocks = [
           request_address: "foo-request-address",
           request_port: "foo-request-port",
           web_port: "foo-web-port",
+          protocol: "http",
+        },
+      },
+    },
+  },
+];
+
+const wsMocks = [
+  {
+    request: {
+      query: SERVER_INFO,
+    },
+    result: {
+      data: {
+        serverInfo: {
+          build_info: {
+            version: "foo-build",
+          },
+          request_address: "foo-request-address",
+          request_port: "foo-request-port",
+          web_port: "foo-web-port",
+          protocol: "ws",
         },
       },
     },
@@ -25,7 +47,7 @@ const mocks = [
 describe("Header", () => {
   test("has title", () => {
     render(
-      <MockedProvider mocks={mocks} addTypename={false}>
+      <MockedProvider mocks={httpMocks} addTypename={false}>
         <Header />
       </MockedProvider>
     );
@@ -36,7 +58,7 @@ describe("Header", () => {
 
   test("has send request", () => {
     render(
-      <MockedProvider mocks={mocks} addTypename={false}>
+      <MockedProvider mocks={httpMocks} addTypename={false}>
         <Header />
       </MockedProvider>
     );
@@ -47,7 +69,7 @@ describe("Header", () => {
 
   test("has view project on github", () => {
     render(
-      <MockedProvider mocks={mocks} addTypename={false}>
+      <MockedProvider mocks={httpMocks} addTypename={false}>
         <Header />
       </MockedProvider>
     );
@@ -60,7 +82,7 @@ describe("Header", () => {
 describe("Header fetches and renders server info", () => {
   test("shows initial loading", () => {
     render(
-      <MockedProvider mocks={mocks} addTypename={false}>
+      <MockedProvider mocks={httpMocks} addTypename={false}>
         <Header />
       </MockedProvider>
     );
@@ -94,7 +116,7 @@ describe("Header fetches and renders server info", () => {
 
   test("has version", async () => {
     render(
-      <MockedProvider mocks={mocks} addTypename={false}>
+      <MockedProvider mocks={httpMocks} addTypename={false}>
         <Header />
       </MockedProvider>
     );
@@ -105,9 +127,9 @@ describe("Header fetches and renders server info", () => {
     expect(buildInfo).toBeInTheDocument();
   });
 
-  test("has server address", async () => {
+  test("has http server address", async () => {
     render(
-      <MockedProvider mocks={mocks} addTypename={false}>
+      <MockedProvider mocks={httpMocks} addTypename={false}>
         <Header />
       </MockedProvider>
     );
@@ -116,6 +138,21 @@ describe("Header fetches and renders server info", () => {
 
     const buildInfo = screen.getByText(
       /Listening on: http:\/\/foo-request-address:foo-request-port/i
+    );
+    expect(buildInfo).toBeInTheDocument();
+  });
+
+  test("has ws server address", async () => {
+    render(
+      <MockedProvider mocks={wsMocks} addTypename={false}>
+        <Header />
+      </MockedProvider>
+    );
+
+    await waitFor(() => new Promise((resolve) => setTimeout(resolve, 0)));
+
+    const buildInfo = screen.getByText(
+      /Listening on: ws:\/\/foo-request-address:foo-request-port/i
     );
     expect(buildInfo).toBeInTheDocument();
   });

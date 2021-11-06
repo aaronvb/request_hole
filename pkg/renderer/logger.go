@@ -26,6 +26,9 @@ type Logger struct {
 	Addr string
 	Port int
 
+	// Protocol is the protocol the web UI server will use.
+	Protocol string
+
 	// LogFile is the open log file
 	logFile *os.File
 
@@ -70,7 +73,7 @@ func (l *Logger) Start(wg *sync.WaitGroup, rp chan protocol.RequestPayload, q ch
 
 // startText returns the starting log string
 func (l *Logger) startText() string {
-	return fmt.Sprintf("Listening on http://%s:%d", l.Addr, l.Port)
+	return fmt.Sprintf("Listening on %s://%s:%d", l.Protocol, l.Addr, l.Port)
 }
 
 // fatal will use the Error prefix to render the error and then exit the CLI.
@@ -95,7 +98,7 @@ func (l *Logger) incomingRequest(r protocol.RequestPayload) {
 
 // incomingRequestText converts the RequestPayload into a printable string.
 func (l *Logger) incomingRequestText(r protocol.RequestPayload) string {
-	return fmt.Sprintf("%s %s %s", r.Fields.Method, r.Fields.Url, r.Params)
+	return fmt.Sprintf("%s %s %s", r.Fields.Method, r.Fields.Url, r.Message)
 }
 
 // incomingRequestHeaders takes the headers from the request, sorts them alphabetically,

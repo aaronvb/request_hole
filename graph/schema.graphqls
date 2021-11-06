@@ -22,9 +22,10 @@ type ParamFields {
 type RequestPayload {
 	id: String!
   fields: RequestFields!
-  headers: MapSlice!
+  headers: MapSlice
 	param_fields: ParamFields!
 	created_at: Time!
+	message: String
 }
 
 type ServerInfo {
@@ -33,6 +34,7 @@ type ServerInfo {
 	web_port: Int!
 	response_code: Int!
 	build_info: MapString
+	protocol: String!
 }
 
 type Query {

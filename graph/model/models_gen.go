@@ -8,4 +8,5 @@ type ServerInfo struct {
 	WebPort        int               `json:"web_port"`
 	ResponseCode   int               `json:"response_code"`
 	BuildInfo      map[string]string `json:"build_info"`
+	Protocol       string            `json:"protocol"`
 }

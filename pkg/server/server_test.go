@@ -9,10 +9,10 @@ import (
 
 func TestStartText(t *testing.T) {
 	pterm.DisableColor()
-	flags := FlagData{Addr: "localhost", Port: 8080, BuildInfo: map[string]string{"version": "dev"}}
+	flags := FlagData{Addr: "localhost", Port: 8080, BuildInfo: map[string]string{"version": "dev"}, Protocol: "http"}
 	server := Server{FlagData: flags}
 	result := server.startText()
-	expected := fmt.Sprintf("Request Hole %s\nListening on http://%s:%d", "dev", server.FlagData.Addr, server.FlagData.Port)
+	expected := fmt.Sprintf("Request Hole %s\nListening on %s://%s:%d", "dev", server.FlagData.Protocol, server.FlagData.Addr, server.FlagData.Port)
 
 	if result != expected {
 		t.Errorf("Expected %s, got %s", expected, result)
@@ -25,12 +25,13 @@ func TestStartTextWithDetails(t *testing.T) {
 		Addr:      "localhost",
 		Port:      8080,
 		BuildInfo: map[string]string{"version": "dev"},
-		Details:   true}
+		Details:   true,
+		Protocol:  "http"}
 	server := Server{FlagData: flags}
 	result := server.startText()
 	expected := fmt.Sprintf(
-		"Request Hole %s\nListening on http://%s:%d\nDetails: %t", "dev",
-		server.FlagData.Addr, server.FlagData.Port, server.FlagData.Details)
+		"Request Hole %s\nListening on %s://%s:%d\nDetails: %t", "dev",
+		server.FlagData.Protocol, server.FlagData.Addr, server.FlagData.Port, server.FlagData.Details)
 
 	if result != expected {
 		t.Errorf("Expected %s, got %s", expected, result)
@@ -44,12 +45,13 @@ func TestStartTextWithLogFile(t *testing.T) {
 		Port:      8080,
 		BuildInfo: map[string]string{"version": "dev"},
 		LogFile:   "rh.log",
+		Protocol:  "ws",
 	}
 	server := Server{FlagData: flags}
 	result := server.startText()
 	expected := fmt.Sprintf(
-		"Request Hole %s\nListening on http://%s:%d\nLog: %s", "dev",
-		server.FlagData.Addr, server.FlagData.Port, server.FlagData.LogFile)
+		"Request Hole %s\nListening on %s://%s:%d\nLog: %s", "dev",
+		server.FlagData.Protocol, server.FlagData.Addr, server.FlagData.Port, server.FlagData.LogFile)
 
 	if result != expected {
 		t.Errorf("Expected %s, got %s", expected, result)
@@ -63,12 +65,13 @@ func TestStartTextWithWebUIDefault(t *testing.T) {
 		Port:      8080,
 		BuildInfo: map[string]string{"version": "dev"},
 		Web:       true,
+		Protocol:  "ws",
 	}
 	server := Server{FlagData: flags}
 	result := server.startText()
 	expected := fmt.Sprintf(
-		"Request Hole %s\nListening on http://%s:%d\nWeb running on: http://%s:%d", "dev",
-		server.FlagData.Addr, server.FlagData.Port, server.FlagData.WebAddress, server.FlagData.WebPort)
+		"Request Hole %s\nListening on %s://%s:%d\nWeb running on: http://%s:%d", "dev",
+		server.FlagData.Protocol, server.FlagData.Addr, server.FlagData.Port, server.FlagData.WebAddress, server.FlagData.WebPort)
 
 	if result != expected {
 		t.Errorf("Expected %s, got %s", expected, result)
@@ -79,6 +82,7 @@ func TestStartTextWithWebUICustomFlags(t *testing.T) {
 	pterm.DisableColor()
 	flags := FlagData{
 		Addr:       "localhost",
+		Protocol:   "ws",
 		Port:       8080,
 		BuildInfo:  map[string]string{"version": "dev"},
 		Web:        true,
@@ -88,8 +92,8 @@ func TestStartTextWithWebUICustomFlags(t *testing.T) {
 	server := Server{FlagData: flags}
 	result := server.startText()
 	expected := fmt.Sprintf(
-		"Request Hole %s\nListening on http://%s:%d\nWeb running on: http://%s:%d", "dev",
-		server.FlagData.Addr, server.FlagData.Port, server.FlagData.WebAddress, server.FlagData.WebPort)
+		"Request Hole %s\nListening on %s://%s:%d\nWeb running on: http://%s:%d", "dev",
+		server.FlagData.Protocol, server.FlagData.Addr, server.FlagData.Port, server.FlagData.WebAddress, server.FlagData.WebPort)
 
 	if result != expected {
 		t.Errorf("Expected %s, got %s", expected, result)

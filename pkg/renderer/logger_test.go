@@ -10,9 +10,9 @@ import (
 )
 
 func TestLoggerStartText(t *testing.T) {
-	logger := Logger{Addr: "localhost", Port: 1234}
+	logger := Logger{Addr: "localhost", Port: 1234, Protocol: "ws"}
 	text := logger.startText()
-	expected := fmt.Sprintf("Listening on http://%s:%d", logger.Addr, logger.Port)
+	expected := fmt.Sprintf("Listening on %s://%s:%d", logger.Protocol, logger.Addr, logger.Port)
 
 	if text != expected {
 		t.Errorf("Expected %s, got %s", expected, text)
@@ -26,7 +26,7 @@ func TestLoggerIncomingRequest(t *testing.T) {
 		Url:    "/foobar",
 	}
 	params := "{\"foo\" => \"bar\"}"
-	rp := protocol.RequestPayload{Fields: fields, Params: params}
+	rp := protocol.RequestPayload{Fields: fields, Message: params}
 	text := logger.incomingRequestText(rp)
 	expected := fmt.Sprintf("%s %s %s", fields.Method, fields.Url, params)
 

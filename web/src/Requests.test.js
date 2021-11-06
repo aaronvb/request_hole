@@ -36,6 +36,7 @@ const mocks = [
               json_array: null,
             },
             created_at: "2021-07-09T13:41:27-10:00",
+            message: "",
           },
         ],
       },

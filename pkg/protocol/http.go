@@ -103,7 +103,7 @@ func (s *Http) logRequest(next http.Handler) http.Handler {
 		req := RequestPayload{
 			ID:          uuid.New().String(),
 			Fields:      fields,
-			Params:      params.ToString(),
+			Message:     params.ToString(),
 			Headers:     r.Header,
 			ParamFields: params.ToFields(),
 			CreatedAt:   time.Now(),

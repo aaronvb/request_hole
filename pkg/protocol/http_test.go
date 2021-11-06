@@ -107,8 +107,8 @@ func TestLogRequestOneRenderer(t *testing.T) {
 			t.Errorf("Expected %s, got %s", test.path, rp.Fields.Url)
 		}
 
-		if rp.Params != test.expectedParams {
-			t.Errorf("Expected %s, got %s", test.expectedParams, rp.Params)
+		if rp.Message != test.expectedParams {
+			t.Errorf("Expected %s, got %s", test.expectedParams, rp.Message)
 		}
 
 		expectedHeaderValue := rp.Headers[test.headerKey][0]
@@ -168,8 +168,8 @@ func TestLogRequestManyRenderers(t *testing.T) {
 			t.Errorf("Expected %s, got %s", test.path, rpA.Fields.Url)
 		}
 
-		if rpA.Params != test.expectedParams {
-			t.Errorf("Expected %s, got %s", test.expectedParams, rpA.Params)
+		if rpA.Message != test.expectedParams {
+			t.Errorf("Expected %s, got %s", test.expectedParams, rpA.Message)
 		}
 
 		if rpB.Fields.Method != test.method {
@@ -180,8 +180,8 @@ func TestLogRequestManyRenderers(t *testing.T) {
 			t.Errorf("Expected %s, got %s", test.path, rpB.Fields.Url)
 		}
 
-		if rpB.Params != test.expectedParams {
-			t.Errorf("Expected %s, got %s", test.expectedParams, rpB.Params)
+		if rpB.Message != test.expectedParams {
+			t.Errorf("Expected %s, got %s", test.expectedParams, rpB.Message)
 		}
 	}
 }
@@ -204,12 +204,20 @@ func TestQuitRenderers(t *testing.T) {
 func TestErrorFromRenderer(t *testing.T) {
 	e1 := make(chan int, 1)
 	e2 := make(chan int, 1)
-	chans := []chan int{e1, e2}
+	errorChans := []chan int{e1, e2}
+
+	q1 := make(chan int, 1)
+	q2 := make(chan int, 1)
+	quitChans := []chan int{q1, q2}
 
 	e1 <- 1
-	err := <-merge(chans)
+	httpServer := Http{}
+	httpServer.Start(make([]chan RequestPayload, 0), quitChans, errorChans)
 
-	if err != 1 {
-		t.Error("Expect	channel to receive error signal")
+	expectedQ1 := <-q1
+	expectedQ2 := <-q2
+
+	if expectedQ1 != 1 || expectedQ2 != 1 {
+		t.Error("Expected channel to receive quit signal")
 	}
 }
