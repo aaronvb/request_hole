@@ -4,7 +4,7 @@
 [![JS Tests](https://github.com/aaronvb/request_hole/workflows/Test%20JS/badge.svg)](https://github.com/aaronvb/request_hole/actions/workflows/test_js.yml)
 [![Builds](https://github.com/aaronvb/request_hole/workflows/Builds/badge.svg)](https://github.com/aaronvb/request_hole/actions/workflows/builds.yml)
 
-`rh` is a CLI tool for creating an ephemeral endpoint for testing and inspecting requests from your application or webhook.
+`rh` is a CLI tool for creating an ephemeral endpoint for testing and inspecting HTTP requests, WebSocket connections, and WebSocket messages from your application or webhook.
 
 <img width="1136" alt="Request Hole CLI web ui" src="https://user-images.githubusercontent.com/100900/125158715-9b866500-e10e-11eb-9438-36d0f8325c60.png">
 
@@ -41,6 +41,7 @@ Available Commands:
   help        Help about any command
   http        Creates an http endpoint
   version     Print version number of Request Hole
+  ws          Creates a websocket endpoint
 
 Flags:
   -a, --address string       sets the address for the endpoint (default "localhost")
@@ -64,6 +65,14 @@ This option will open a web UI that will display the incoming requests. Incoming
 
 <img width="1136" alt="Request Hole CLI web ui" src="https://user-images.githubusercontent.com/100900/125158715-9b866500-e10e-11eb-9438-36d0f8325c60.png">
 
+### Create a WebSocket endpoint
+```
+$ rh ws --web
+```
+This option will open a web UI that will display the WebSocket connections and incoming messages. Connections and incoming messages will render live in the browser when they are received.
+
+<img width="1375" alt="Screen Shot 2021-11-05 at 15 03 31" src="https://user-images.githubusercontent.com/100900/140592650-fa8aa3d4-41b7-4c2f-9a2b-b81e1bbed575.png">
+
 ## Using the CLI
 ### Creating an HTTP endpoint
 To create an http endpoint with default settings (port 8080, return status code 200):
@@ -71,6 +80,13 @@ To create an http endpoint with default settings (port 8080, return status code 
 $ rh http
 ```
 <img width="785" alt="Request Hole CLI http" src="https://user-images.githubusercontent.com/100900/120266278-474db280-c23d-11eb-9e1f-4d73d18522d5.png">
+
+### Creating a WebSocket endpoint
+To create a WebSocket endpoint with default settings (port 8080):
+```
+$ rh ws
+```
+<img width="784" alt="Request Hole CLI WebSocket" src="https://user-images.githubusercontent.com/100900/140592519-a965af54-a0a3-44cd-be55-1401c8925590.png">
 
 ### Show header details
 This option shows all the header details in the incoming request.
