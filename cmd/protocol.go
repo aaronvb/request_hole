@@ -95,18 +95,20 @@ func wsCommand(cmd *cobra.Command, args []string) {
 
 	// Collect flag data into struct to use with renderers
 	flagData := server.FlagData{
-		Addr:      Address,
-		BuildInfo: BuildInfo,
-		Details:   Details,
-		LogFile:   LogFile,
-		Port:      Port,
-		Protocol:  "ws",
-		Web:       Web,
-		WebPort:   WebPort,
+		Addr:       Address,
+		BuildInfo:  BuildInfo,
+		Details:    Details,
+		LogFile:    LogFile,
+		Port:       Port,
+		Protocol:   "ws",
+		Web:        Web,
+		WebAddress: WebAddress,
+		WebPort:    WebPort,
 	}
 
 	if Web {
 		web := &renderer.Web{
+			Address:      WebAddress,
 			Port:         WebPort,
 			StaticFiles:  StaticFS,
 			RequestAddr:  Address,
