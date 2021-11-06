@@ -70,6 +70,7 @@ func httpCommand(cmd *cobra.Command, args []string) {
 			Details:  Details,
 			Addr:     Address,
 			Port:     Port,
+			Protocol: "http",
 		}
 		renderers = append(renderers, logger)
 	}
@@ -126,6 +127,7 @@ func wsCommand(cmd *cobra.Command, args []string) {
 			Details:  Details,
 			Addr:     Address,
 			Port:     Port,
+			Protocol: "ws",
 		}
 		renderers = append(renderers, logger)
 	}
