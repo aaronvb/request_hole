@@ -2,8 +2,12 @@ package protocol
 
 import (
 	"bytes"
+	"io"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
+	"strings"
 	"testing"
 )
 
@@ -36,6 +40,7 @@ func TestLogRequestOneRenderer(t *testing.T) {
 		method         string
 		path           string
 		body           string
+		params         map[string]string
 		expectedParams string
 		headerKey      string
 		headerValue    string
@@ -44,6 +49,7 @@ func TestLogRequestOneRenderer(t *testing.T) {
 			http.MethodGet,
 			"/foo",
 			"",
+			nil,
 			"",
 			"Foo",
 			"Bar",
@@ -52,14 +58,25 @@ func TestLogRequestOneRenderer(t *testing.T) {
 			http.MethodPost,
 			"/foo/bar",
 			"{\"foo\": \"bar\"}",
+			nil,
 			"{\"foo\" => \"bar\"}",
 			"Content-Type",
 			"application/json",
 		},
 		{
+			http.MethodPost,
+			"/form/data",
+			"",
+			map[string]string{"aloha": "friday"},
+			"{\"aloha\" => \"friday\"}",
+			"Content-Type",
+			"multipart/form-data",
+		},
+		{
 			http.MethodDelete,
 			"/foo/1",
 			"",
+			nil,
 			"",
 			"Bearer",
 			"hello!",
@@ -68,6 +85,7 @@ func TestLogRequestOneRenderer(t *testing.T) {
 			http.MethodGet,
 			"/foo/bar?hello=world",
 			"",
+			nil,
 			"{\"hello\" => \"world\"}",
 			"Content-Type",
 			"application/json!",
@@ -80,22 +98,56 @@ func TestLogRequestOneRenderer(t *testing.T) {
 	defer srv.Close()
 
 	for _, test := range testTable {
-		b := bytes.NewBuffer([]byte(test.body))
-		req, err := http.NewRequest(test.method, srv.URL+test.path, b)
+		r, _ := regexp.Compile(`multipart\/form-data`)
+		matched := r.MatchString(test.headerValue)
+		if test.headerKey == "Content-Type" && matched {
+			b := &bytes.Buffer{}
+			writer := multipart.NewWriter(b)
+			for k := range test.params {
+				fw, err := writer.CreateFormField(k)
+				if err != nil {
+					t.Errorf("Error POST to httptest server")
+				}
 
-		if test.headerKey != "" {
-			req.Header.Set(test.headerKey, test.headerValue)
-		}
+				_, err = io.Copy(fw, strings.NewReader(test.params[k]))
+				if err != nil {
+					t.Errorf("Error POST to httptest server")
+				}
+			}
+			writer.Close()
+			req, err := http.NewRequest(test.method, srv.URL+test.path, bytes.NewReader(b.Bytes()))
 
-		if err != nil {
-			t.Error(err)
-		}
+			if err != nil {
+				t.Error(err)
+			}
 
-		resp, err := http.DefaultClient.Do(req)
-		if err != nil {
-			t.Error(err)
+			req.Header.Set("Content-Type", writer.FormDataContentType())
+			resp, err := http.DefaultClient.Do(req)
+			if err != nil {
+				t.Error(err)
+			}
+			if resp.StatusCode != http.StatusOK {
+				t.Errorf("Request failed with response code: %d", resp.StatusCode)
+			}
+			resp.Body.Close()
+		} else {
+			b := bytes.NewBuffer([]byte(test.body))
+			req, err := http.NewRequest(test.method, srv.URL+test.path, b)
+
+			if test.headerKey != "" {
+				req.Header.Set(test.headerKey, test.headerValue)
+			}
+
+			if err != nil {
+				t.Error(err)
+			}
+
+			resp, err := http.DefaultClient.Do(req)
+			if err != nil {
+				t.Error(err)
+			}
+			resp.Body.Close()
 		}
-		resp.Body.Close()
 
 		rp := <-rpChannel
 
@@ -111,9 +163,11 @@ func TestLogRequestOneRenderer(t *testing.T) {
 			t.Errorf("Expected %s, got %s", test.expectedParams, rp.Message)
 		}
 
-		expectedHeaderValue := rp.Headers[test.headerKey][0]
-		if expectedHeaderValue != test.headerValue {
-			t.Errorf("Expected %s, got %s", expectedHeaderValue, test.headerValue)
+		headerValue := rp.Headers[test.headerKey][0]
+		r, _ = regexp.Compile(test.headerValue)
+		matched = r.MatchString(headerValue)
+		if !matched {
+			t.Errorf("Expected %s, got %s", test.headerValue, headerValue)
 		}
 	}
 }
