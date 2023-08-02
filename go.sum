@@ -16,8 +16,8 @@ github.com/99designs/gqlgen v0.14.0/go.mod h1:S7z4boV+Nx4VvzMUpVrY/YuHjFX4n7rDyu
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
-github.com/aaronvb/logparams v1.2.1 h1:M7V+C+srwqEt8JEvMDnWcxDau54yJRFpFPWcPFMwYfs=
-github.com/aaronvb/logparams v1.2.1/go.mod h1:EfsbQCYPGhTlIuZedH4UOqX0+sc7GXUa74EZnxojyUY=
+github.com/aaronvb/logparams v1.3.0 h1:ihtKvvrqBp/SJ/wMb7XJN/pEPC7Iy0UVkzF1cFvsypE=
+github.com/aaronvb/logparams v1.3.0/go.mod h1:EfsbQCYPGhTlIuZedH4UOqX0+sc7GXUa74EZnxojyUY=
 github.com/aaronvb/logrequest v1.0.0 h1:r4msHP8F9wiK3V+os7SpdPRbrc7jmq1eGkKds5cF/AY=
 github.com/aaronvb/logrequest v1.0.0/go.mod h1:4J4lCfoLU7+ZQpWHX85LQnuZoHlgOjBaNhDqO94vM2s=
 github.com/agnivade/levenshtein v1.0.1/go.mod h1:CURSv5d9Uaml+FovSIICkLbAUZ9S4RqaHDIsdSBg7lM=
