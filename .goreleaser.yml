@@ -10,6 +10,9 @@ builds:
       - windows
       - darwin
     binary: rh
+    ignore:
+      - goos: windows
+        goarch: arm64
 archives:
   - name_template: >-
       {{ .ProjectName }}_
