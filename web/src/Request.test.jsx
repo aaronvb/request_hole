@@ -1,5 +1,8 @@
+import { expect, describe, test } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
+import "@testing-library/jest-dom";
 import Request from "./Request";
+import { act } from "react-dom/test-utils";
 
 describe("Request", () => {
   test("renders url", () => {
@@ -24,7 +27,7 @@ describe("Request", () => {
     render(<Request fields={{}} created_at={"2000-01-01"} />);
 
     expect(
-      screen.getByText(/(seconds|minutes|hours|days|weeks|months|years) ago/i)
+      screen.getByText(/(seconds|minutes|hours|days|weeks|months|years) ago/i),
     ).toBeInTheDocument();
   });
 
@@ -43,13 +46,15 @@ describe("Details", () => {
         headers={{}}
         showAllDetails={true}
         fields={{ url: "/foobar" }}
-      />
+      />,
     );
 
     expect(screen.getByText(/(\d|no) headers/i)).toBeInTheDocument();
     expect(screen.getByText(/(\d|no) params/i)).toBeInTheDocument();
 
-    screen.getByTestId("toggleDetails").click();
+    act(() => {
+      screen.getByTestId("toggleDetails").click();
+    });
 
     await waitFor(() => {
       expect(screen.queryByText(/(\d|no) headers/i)).not.toBeInTheDocument();
@@ -64,13 +69,15 @@ describe("Details", () => {
         headers={{}}
         showAllDetails={false}
         fields={{ url: "/foobar" }}
-      />
+      />,
     );
 
     expect(screen.queryByText(/(\d|no) headers/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/(\d|no) params/i)).not.toBeInTheDocument();
 
-    screen.getByTestId("toggleDetails").click();
+    act(() => {
+      screen.getByTestId("toggleDetails").click();
+    });
 
     await waitFor(() => {
       expect(screen.queryByText(/(\d|no) headers/i)).toBeInTheDocument();

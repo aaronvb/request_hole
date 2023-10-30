@@ -1,4 +1,6 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { expect, describe, test, vi } from "vitest";
+import { act, render, screen, waitFor } from "@testing-library/react";
+import "@testing-library/jest-dom";
 import { MockedProvider } from "@apollo/client/testing";
 import Requests, {
   ALL_REQUESTS,
@@ -65,11 +67,11 @@ describe("Requests", () => {
     render(
       <MockedProvider mocks={mocks} addTypename={false}>
         <Requests filters={[]} />
-      </MockedProvider>
+      </MockedProvider>,
     );
 
     expect(
-      screen.getByRole("button", { name: "Clear Requests" })
+      screen.getByRole("button", { name: "Clear Requests" }),
     ).toBeInTheDocument();
   });
 
@@ -77,11 +79,11 @@ describe("Requests", () => {
     render(
       <MockedProvider mocks={mocks} addTypename={false}>
         <Requests filters={[]} />
-      </MockedProvider>
+      </MockedProvider>,
     );
 
     expect(
-      screen.getByRole("button", { name: "Hide Details" })
+      screen.getByRole("button", { name: "Hide Details" }),
     ).toBeInTheDocument();
   });
 
@@ -89,11 +91,11 @@ describe("Requests", () => {
     render(
       <MockedProvider mocks={mocks} addTypename={false}>
         <Requests filters={[]} />
-      </MockedProvider>
+      </MockedProvider>,
     );
 
     expect(
-      screen.getByRole("button", { name: "Filter: ALL" })
+      screen.getByRole("button", { name: "Filter: ALL" }),
     ).toBeInTheDocument();
   });
 });
@@ -103,18 +105,18 @@ describe("Requests fetches and renders requests", () => {
     render(
       <MockedProvider mocks={mocks} addTypename={false}>
         <Requests filters={[]} />
-      </MockedProvider>
+      </MockedProvider>,
     );
 
     expect(
-      screen.getByRole("heading", { name: "0 Requests" })
+      screen.getByRole("heading", { name: "0 Requests" }),
     ).toBeInTheDocument();
     expect(screen.getByText(/Loading requests.../i)).toBeInTheDocument();
 
     await waitFor(() => new Promise((resolve) => setTimeout(resolve, 0)));
 
     expect(
-      screen.getByRole("heading", { name: "1 Request" })
+      screen.getByRole("heading", { name: "1 Request" }),
     ).toBeInTheDocument();
   });
 
@@ -122,23 +124,27 @@ describe("Requests fetches and renders requests", () => {
     render(
       <MockedProvider mocks={mocks} addTypename={false}>
         <Requests filters={[]} />
-      </MockedProvider>
+      </MockedProvider>,
     );
 
     await waitFor(() => new Promise((resolve) => setTimeout(resolve, 0)));
 
     expect(
-      screen.getByRole("heading", { name: "1 Request" })
+      screen.getByRole("heading", { name: "1 Request" }),
     ).toBeInTheDocument();
 
-    window.confirm = jest.fn(() => true);
-    screen.getByRole("button", { name: "Clear Requests" }).click();
+    window.confirm = vi.fn(() => true);
+
+    act(() => {
+      screen.getByRole("button", { name: "Clear Requests" }).click();
+    });
+
     expect(window.confirm).toBeCalled();
 
     await waitFor(() => new Promise((resolve) => setTimeout(resolve, 0)));
 
     expect(
-      screen.getByRole("heading", { name: "0 Requests" })
+      screen.getByRole("heading", { name: "0 Requests" }),
     ).toBeInTheDocument();
   });
 });
@@ -148,18 +154,21 @@ describe("Details", () => {
     render(
       <MockedProvider mocks={mocks} addTypename={false}>
         <Requests filters={[]} />
-      </MockedProvider>
+      </MockedProvider>,
     );
 
     await waitFor(() => new Promise((resolve) => setTimeout(resolve, 0)));
 
     expect(
-      screen.getByRole("heading", { name: "1 Request" })
+      screen.getByRole("heading", { name: "1 Request" }),
     ).toBeInTheDocument();
 
     expect(screen.getByText(/(\d|no) headers/i)).toBeInTheDocument();
     expect(screen.getByText(/(\d|no) params/i)).toBeInTheDocument();
-    screen.getByRole("button", { name: "Hide Details" }).click();
+
+    act(() => {
+      screen.getByRole("button", { name: "Hide Details" }).click();
+    });
 
     await waitFor(() => {
       expect(screen.queryByText(/(\d|no) headers/i)).not.toBeInTheDocument();
@@ -171,17 +180,21 @@ describe("Details", () => {
     render(
       <MockedProvider mocks={mocks} addTypename={false}>
         <Requests filters={[]} />
-      </MockedProvider>
+      </MockedProvider>,
     );
 
-    screen.getByRole("button", { name: "Hide Details" }).click();
+    act(() => {
+      screen.getByRole("button", { name: "Hide Details" }).click();
+    });
 
     await waitFor(() => {
       expect(screen.queryByText(/(\d|no) headers/i)).not.toBeInTheDocument();
       expect(screen.queryByText(/(\d|no) params/i)).not.toBeInTheDocument();
     });
 
-    screen.getByRole("button", { name: "Show Details" }).click();
+    act(() => {
+      screen.getByRole("button", { name: "Show Details" }).click();
+    });
 
     await waitFor(() => {
       expect(screen.queryByText(/(\d|no) headers/i)).toBeInTheDocument();
@@ -195,7 +208,7 @@ describe("Filter", () => {
     render(
       <MockedProvider mocks={mocks} addTypename={false}>
         <Requests filters={["PUT", "HEAD"]} />
-      </MockedProvider>
+      </MockedProvider>,
     );
 
     expect(screen.getByRole("button", { name: "ALL" })).toBeInTheDocument();
@@ -205,7 +218,7 @@ describe("Filter", () => {
     render(
       <MockedProvider mocks={mocks} addTypename={false}>
         <Requests filters={["PUT", "HEAD"]} />
-      </MockedProvider>
+      </MockedProvider>,
     );
 
     expect(screen.getByRole("button", { name: "PUT" })).toBeInTheDocument();
@@ -216,22 +229,24 @@ describe("Filter", () => {
     render(
       <MockedProvider mocks={mocks} addTypename={false}>
         <Requests filters={["PUT", "HEAD"]} />
-      </MockedProvider>
+      </MockedProvider>,
     );
 
     expect(
-      screen.getByRole("button", { name: "Filter: ALL" })
+      screen.getByRole("button", { name: "Filter: ALL" }),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "PUT" })).toBeInTheDocument();
 
-    screen.getByRole("button", { name: "PUT" }).click();
+    act(() => {
+      screen.getByRole("button", { name: "PUT" }).click();
+    });
 
     await waitFor(() => {
       expect(
-        screen.queryByRole("button", { name: "Filter: PUT" })
+        screen.queryByRole("button", { name: "Filter: PUT" }),
       ).toBeInTheDocument();
       expect(
-        screen.queryByRole("button", { name: "Filter: ALL" })
+        screen.queryByRole("button", { name: "Filter: ALL" }),
       ).not.toBeInTheDocument();
     });
   });
@@ -240,25 +255,29 @@ describe("Filter", () => {
     render(
       <MockedProvider mocks={mocks} addTypename={false}>
         <Requests filters={["PUT", "HEAD", "GET"]} />
-      </MockedProvider>
+      </MockedProvider>,
     );
 
     await waitFor(() => new Promise((resolve) => setTimeout(resolve, 0)));
 
     expect(
-      screen.getByRole("heading", { name: "1 Request" })
+      screen.getByRole("heading", { name: "1 Request" }),
     ).toBeInTheDocument();
 
-    screen.getByRole("button", { name: "PUT" }).click();
+    act(() => {
+      screen.getByRole("button", { name: "PUT" }).click();
+    });
 
-    await expect(
-      screen.getByRole("heading", { name: "0 Requests" })
+    expect(
+      screen.getByRole("heading", { name: "0 Requests" }),
     ).toBeInTheDocument();
 
-    screen.getByRole("button", { name: "GET" }).click();
+    act(() => {
+      screen.getByRole("button", { name: "GET" }).click();
+    });
 
-    await expect(
-      screen.getByRole("heading", { name: "1 Request" })
+    expect(
+      screen.getByRole("heading", { name: "1 Request" }),
     ).toBeInTheDocument();
   });
 });
