@@ -1,4 +1,6 @@
+import { expect, describe, test } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
+import "@testing-library/jest-dom";
 import { MockedProvider } from "@apollo/client/testing";
 import SendWebSocket, { SERVER_INFO } from "./SendWebSocket";
 
@@ -24,7 +26,7 @@ describe("SendWebSocket", () => {
     render(
       <MockedProvider mocks={mocks} addTypename={false}>
         <SendWebSocket filters={[]} visible={true} />
-      </MockedProvider>
+      </MockedProvider>,
     );
 
     expect(screen.getByLabelText(/url/i)).toBeInTheDocument();
@@ -37,7 +39,7 @@ describe("SendWebSocket", () => {
     render(
       <MockedProvider mocks={mocks} addTypename={false}>
         <SendWebSocket filters={[]} visible={true} />
-      </MockedProvider>
+      </MockedProvider>,
     );
 
     expect(screen.getByRole("button", { name: "Connect" })).toBeInTheDocument();
@@ -48,7 +50,7 @@ describe("SendWebSocket", () => {
     render(
       <MockedProvider mocks={mocks} addTypename={false}>
         <SendWebSocket visible={false} />
-      </MockedProvider>
+      </MockedProvider>,
     );
 
     expect(screen.queryAllByRole("button")).toHaveLength(0);
@@ -58,7 +60,7 @@ describe("SendWebSocket", () => {
     render(
       <MockedProvider mocks={mocks} addTypename={false}>
         <SendWebSocket filters={[]} visible={true} />
-      </MockedProvider>
+      </MockedProvider>,
     );
 
     expect(screen.queryByLabelText(/body/i)).not.toBeInTheDocument();
@@ -70,7 +72,7 @@ describe("SendWebSocket fetches serverInfo", () => {
     render(
       <MockedProvider mocks={mocks} addTypename={false}>
         <SendWebSocket filters={[]} visible={true} />
-      </MockedProvider>
+      </MockedProvider>,
     );
 
     expect(screen.getByLabelText(/url/i)).toBeInTheDocument();
@@ -79,7 +81,7 @@ describe("SendWebSocket fetches serverInfo", () => {
 
     const expectedUrl = "ws://foo-request-address:foo-request-port";
     expect(screen.getByRole("textbox", { name: /url/i })).toHaveValue(
-      expectedUrl
+      expectedUrl,
     );
   });
 });

@@ -1,5 +1,5 @@
 import React from "react";
-import ReactDOM from "react-dom";
+import ReactDOM from "react-dom/client";
 import "./index.css";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
@@ -14,6 +14,7 @@ import {
 } from "@apollo/client";
 
 let host = document.location.host;
+// eslint-disable-next-line no-undef
 if (process.env.NODE_ENV === "development") {
   host = "localhost:8081";
 }
@@ -43,7 +44,7 @@ const splitLink = split(
     );
   },
   wsLink,
-  httpLink
+  httpLink,
 );
 
 const client = new ApolloClient({
@@ -56,14 +57,12 @@ const client = new ApolloClient({
     },
   }),
 });
-
-ReactDOM.render(
-  <ApolloProvider client={client}>
-    <React.StrictMode>
+ReactDOM.createRoot(document.getElementById("root")).render(
+  <React.StrictMode>
+    <ApolloProvider client={client}>
       <App />
-    </React.StrictMode>
-  </ApolloProvider>,
-  document.getElementById("root")
+    </ApolloProvider>{" "}
+  </React.StrictMode>,
 );
 
 // If you want to start measuring performance in your app, pass a function

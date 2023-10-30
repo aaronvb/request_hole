@@ -1,4 +1,6 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { expect, describe, test } from "vitest";
+import { render, screen } from "@testing-library/react";
+import "@testing-library/jest-dom";
 import RequestParams from "./RequestParams";
 
 const params = {
@@ -61,7 +63,7 @@ describe("RequestParams", () => {
     });
 
     test("renders a json message", () => {
-      render(<RequestParams message={JSON.stringify({"aloha": "friday"})} />);
+      render(<RequestParams message={JSON.stringify({ aloha: "friday" })} />);
       expect(screen.getByText(/1 item/)).toBeInTheDocument();
       expect(screen.getByText(/aloha/)).toBeInTheDocument();
       expect(screen.getByText(/friday/)).toBeInTheDocument();
